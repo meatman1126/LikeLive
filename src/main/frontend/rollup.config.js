@@ -31,7 +31,11 @@ function serve() {
 
 export default {
 	// 画面が増えるたびにinputをMapで列挙する
-	input: 'src/main.js',
+	input: { 
+		main: 'src/main.js',
+		top: 'src/top.js',
+		index: 'src/index.js',
+	},
 	output: {
 		sourcemap: true,
 		format: 'esm',
@@ -62,7 +66,14 @@ export default {
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
-		!production && serve(),
+		!production && serve(
+			{
+			open: true,
+			contentBase: ['public'],
+			host: '127.0.0.1',
+			port: 3000
+		  }
+		  ),
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production

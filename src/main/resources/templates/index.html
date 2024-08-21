@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <title>Hello</title>
-</head>
+<head th:replace="fragments/header :: headerFragment ('Index')"></head>
+<title>Hello</title>
+
 <body>
 <p>Message goes here</p>
 <!-- svelteによりビルドされた資材をimport -->
-<!-- <script type="module" src="../static/build/main.js"></script> -->
+<script src="/build/index.js" type="module"></script>
 
 </body>
 </html>
