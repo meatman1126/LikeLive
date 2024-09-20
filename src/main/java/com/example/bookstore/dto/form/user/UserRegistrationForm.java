@@ -1,4 +1,4 @@
-package com.example.bookstore.dto.form;
+package com.example.bookstore.dto.form.user;
 
 import com.example.bookstore.entity.Artist;
 import lombok.Builder;

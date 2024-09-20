@@ -11,8 +11,4 @@ public class IndexController {
         return "index";
     }
 
-    @GetMapping("/index/new")
-    public String firstLogin() {
-        return "index";
-    }
 }

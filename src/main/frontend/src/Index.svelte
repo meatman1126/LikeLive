@@ -95,7 +95,7 @@
         );
     }
 
-    const register_url = "/register";
+    const update_url = "/user/update";
 
     // フォーム表示フラグ
     let showUserForm = false;
@@ -114,7 +114,7 @@
         };
 
         try {
-            const response = await fetch(register_url, requestOptions);
+            const response = await fetch(update_url, requestOptions);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -122,7 +122,6 @@
         } catch (error) {
             console.error("Error:", error);
         }
-        alert("request success");
     }
     onMount(() => {
         // コンポーネントがマウントされたときに実行されるコード
@@ -139,7 +138,7 @@
         <div class="registration-container" in:fly={{ y: 200, duration: 2000 }}>
             <h2>ユーザ登録</h2>
             <form
-                action={register_url}
+                action={update_url}
                 method="post"
                 id="register-form"
                 on:submit={handleSubmit}

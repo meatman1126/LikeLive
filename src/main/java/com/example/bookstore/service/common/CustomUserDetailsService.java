@@ -1,6 +1,6 @@
 package com.example.bookstore.service.common;
 
-import com.example.bookstore.repository.UserRepository;
+import com.example.bookstore.repository.jpa.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,12 +13,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        com.example.bookstore.entity.User user = userRepository.findByEmail(email);
-//        if (user == null) {
-//            throw new UsernameNotFoundException("User not found");
-//        }
-
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return null;
+//        User user = userRepository.findBySubject(username)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+//        return new CustomUserDetails(
+//                user.getId(),
+//                user.getSubject(),
+//                "",
+//
+//
+//        );
     }
 }

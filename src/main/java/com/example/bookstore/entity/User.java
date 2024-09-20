@@ -1,22 +1,22 @@
 package com.example.bookstore.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
 /**
  * ユーザエンティティクラス
  */
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "users")
+@SuperBuilder
 @Data
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,16 +40,19 @@ public class User extends BaseEntity {
     @Column
     private String subject;
 
+    /**
+     * ユーザの自己紹介文
+     */
+    @Column(name = "self_introduction", length = 1000)
+    private String selfIntroduction;
+
+    /**
+     * プロフィール画像のURL
+     */
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @OneToMany(mappedBy = "user")
     private Set<UserArtist> userArtists;
-
-//    @ManyToMany
-//    @JoinTable(
-//            name = "user_artist",
-//            joinColumns = @JoinColumn(name = "user_id"),
-//            inverseJoinColumns = @JoinColumn(name = "artist_id")
-//    )
-//    private Set<Artist> artists = new HashSet<>();
-
 
 }

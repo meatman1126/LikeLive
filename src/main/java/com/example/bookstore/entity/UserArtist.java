@@ -2,14 +2,14 @@ package com.example.bookstore.entity;
 
 import com.example.bookstore.entity.key.UserArtistId;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 public class UserArtist extends BaseEntity {
 
     @EmbeddedId
@@ -24,8 +24,5 @@ public class UserArtist extends BaseEntity {
     @MapsId("artistId")
     @JoinColumn(name = "artist_id")
     private Artist artist;
-
-    @Column(nullable = false)
-    private boolean favorite;
-
+    
 }

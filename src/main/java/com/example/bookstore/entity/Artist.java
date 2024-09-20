@@ -1,17 +1,19 @@
 package com.example.bookstore.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "artists")
+@SuperBuilder
 @Data
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class Artist extends BaseEntity {
 
     @Id

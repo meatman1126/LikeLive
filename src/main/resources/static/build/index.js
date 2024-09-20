@@ -5308,7 +5308,7 @@ function get_each_context_1(ctx, list, i) {
 	return child_ctx;
 }
 
-// (137:0) {#if showUserForm}
+// (136:0) {#if showUserForm}
 function create_if_block(ctx) {
 	let div4;
 	let div3;
@@ -5400,27 +5400,27 @@ function create_if_block(ctx) {
 			div2 = element("div");
 			create_component(button.$$.fragment);
 			attr_dev(h2, "class", "svelte-1vi2prd");
-			add_location(h2, file, 139, 12, 4027);
+			add_location(h2, file, 138, 12, 3992);
 			attr_dev(label0, "for", "username");
 			attr_dev(label0, "class", "svelte-1vi2prd");
-			add_location(label0, file, 147, 20, 4279);
+			add_location(label0, file, 146, 20, 4242);
 			attr_dev(div0, "class", "form-group svelte-1vi2prd");
-			add_location(div0, file, 146, 16, 4234);
+			add_location(div0, file, 145, 16, 4197);
 			attr_dev(label1, "for", "artist");
 			attr_dev(label1, "class", "svelte-1vi2prd");
-			add_location(label1, file, 163, 20, 4934);
+			add_location(label1, file, 162, 20, 4897);
 			attr_dev(div1, "class", "form-group svelte-1vi2prd");
-			add_location(div1, file, 162, 16, 4889);
+			add_location(div1, file, 161, 16, 4852);
 			attr_dev(div2, "class", "button-group svelte-1vi2prd");
-			add_location(div2, file, 232, 16, 7865);
-			attr_dev(form, "action", register_url);
+			add_location(div2, file, 231, 16, 7828);
+			attr_dev(form, "action", update_url);
 			attr_dev(form, "method", "post");
 			attr_dev(form, "id", "register-form");
-			add_location(form, file, 140, 12, 4054);
+			add_location(form, file, 139, 12, 4019);
 			attr_dev(div3, "class", "registration-container svelte-1vi2prd");
-			add_location(div3, file, 138, 8, 3942);
+			add_location(div3, file, 137, 8, 3907);
 			attr_dev(div4, "class", "wrapper modal-backdrop svelte-1vi2prd");
-			add_location(div4, file, 137, 4, 3897);
+			add_location(div4, file, 136, 4, 3862);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, div4, anchor);
@@ -5580,14 +5580,14 @@ function create_if_block(ctx) {
 		block,
 		id: create_if_block.name,
 		type: "if",
-		source: "(137:0) {#if showUserForm}",
+		source: "(136:0) {#if showUserForm}",
 		ctx
 	});
 
 	return block;
 }
 
-// (150:24) <InputGroupText>
+// (149:24) <InputGroupText>
 function create_default_slot_6(ctx) {
 	let i;
 
@@ -5595,7 +5595,7 @@ function create_default_slot_6(ctx) {
 		c: function create() {
 			i = element("i");
 			attr_dev(i, "class", "fas fa-user");
-			add_location(i, file, 150, 28, 4416);
+			add_location(i, file, 149, 28, 4379);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, i, anchor);
@@ -5610,14 +5610,14 @@ function create_default_slot_6(ctx) {
 		block,
 		id: create_default_slot_6.name,
 		type: "slot",
-		source: "(150:24) <InputGroupText>",
+		source: "(149:24) <InputGroupText>",
 		ctx
 	});
 
 	return block;
 }
 
-// (149:20) <InputGroup>
+// (148:20) <InputGroup>
 function create_default_slot_5(ctx) {
 	let inputgrouptext;
 	let t;
@@ -5704,14 +5704,14 @@ function create_default_slot_5(ctx) {
 		block,
 		id: create_default_slot_5.name,
 		type: "slot",
-		source: "(149:20) <InputGroup>",
+		source: "(148:20) <InputGroup>",
 		ctx
 	});
 
 	return block;
 }
 
-// (166:24) <InputGroupText>
+// (165:24) <InputGroupText>
 function create_default_slot_4(ctx) {
 	let i;
 
@@ -5719,7 +5719,7 @@ function create_default_slot_4(ctx) {
 		c: function create() {
 			i = element("i");
 			attr_dev(i, "class", "fas fa-comment");
-			add_location(i, file, 166, 28, 5074);
+			add_location(i, file, 165, 28, 5037);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, i, anchor);
@@ -5734,14 +5734,14 @@ function create_default_slot_4(ctx) {
 		block,
 		id: create_default_slot_4.name,
 		type: "slot",
-		source: "(166:24) <InputGroupText>",
+		source: "(165:24) <InputGroupText>",
 		ctx
 	});
 
 	return block;
 }
 
-// (176:24) <Button                             type="button"                             color="secondary"                             class="register-btn"                             on:click={handleSearch}>
+// (175:24) <Button                             type="button"                             color="secondary"                             class="register-btn"                             on:click={handleSearch}>
 function create_default_slot_3(ctx) {
 	let t;
 
@@ -5761,14 +5761,14 @@ function create_default_slot_3(ctx) {
 		block,
 		id: create_default_slot_3.name,
 		type: "slot",
-		source: "(176:24) <Button                             type=\\\"button\\\"                             color=\\\"secondary\\\"                             class=\\\"register-btn\\\"                             on:click={handleSearch}>",
+		source: "(175:24) <Button                             type=\\\"button\\\"                             color=\\\"secondary\\\"                             class=\\\"register-btn\\\"                             on:click={handleSearch}>",
 		ctx
 	});
 
 	return block;
 }
 
-// (165:20) <InputGroup>
+// (164:20) <InputGroup>
 function create_default_slot_2(ctx) {
 	let inputgrouptext;
 	let t0;
@@ -5884,14 +5884,14 @@ function create_default_slot_2(ctx) {
 		block,
 		id: create_default_slot_2.name,
 		type: "slot",
-		source: "(165:20) <InputGroup>",
+		source: "(164:20) <InputGroup>",
 		ctx
 	});
 
 	return block;
 }
 
-// (184:16) {#if loading}
+// (183:16) {#if loading}
 function create_if_block_5(ctx) {
 	let p;
 
@@ -5899,7 +5899,7 @@ function create_if_block_5(ctx) {
 		c: function create() {
 			p = element("p");
 			p.textContent = "Loading...";
-			add_location(p, file, 184, 20, 5796);
+			add_location(p, file, 183, 20, 5759);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, p, anchor);
@@ -5913,14 +5913,14 @@ function create_if_block_5(ctx) {
 		block,
 		id: create_if_block_5.name,
 		type: "if",
-		source: "(184:16) {#if loading}",
+		source: "(183:16) {#if loading}",
 		ctx
 	});
 
 	return block;
 }
 
-// (188:16) {#if error}
+// (187:16) {#if error}
 function create_if_block_4(ctx) {
 	let p;
 	let t;
@@ -5930,7 +5930,7 @@ function create_if_block_4(ctx) {
 			p = element("p");
 			t = text(/*error*/ ctx[3]);
 			set_style(p, "color", "red");
-			add_location(p, file, 188, 20, 5885);
+			add_location(p, file, 187, 20, 5848);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, p, anchor);
@@ -5948,14 +5948,14 @@ function create_if_block_4(ctx) {
 		block,
 		id: create_if_block_4.name,
 		type: "if",
-		source: "(188:16) {#if error}",
+		source: "(187:16) {#if error}",
 		ctx
 	});
 
 	return block;
 }
 
-// (192:16) {#if artists.length > 0}
+// (191:16) {#if artists.length > 0}
 function create_if_block_2(ctx) {
 	let ul;
 	let each_value_1 = /*artists*/ ctx[1];
@@ -5975,7 +5975,7 @@ function create_if_block_2(ctx) {
 			}
 
 			attr_dev(ul, "class", "search-result svelte-1vi2prd");
-			add_location(ul, file, 192, 20, 6004);
+			add_location(ul, file, 191, 20, 5967);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, ul, anchor);
@@ -6021,14 +6021,14 @@ function create_if_block_2(ctx) {
 		block,
 		id: create_if_block_2.name,
 		type: "if",
-		source: "(192:16) {#if artists.length > 0}",
+		source: "(191:16) {#if artists.length > 0}",
 		ctx
 	});
 
 	return block;
 }
 
-// (201:32) {#if artist.images.length > 0}
+// (200:32) {#if artist.images.length > 0}
 function create_if_block_3(ctx) {
 	let img;
 	let img_src_value;
@@ -6040,7 +6040,7 @@ function create_if_block_3(ctx) {
 			if (!src_url_equal(img.src, img_src_value = /*artist*/ ctx[17].images[0].url)) attr_dev(img, "src", img_src_value);
 			attr_dev(img, "alt", img_alt_value = /*artist*/ ctx[17].name);
 			attr_dev(img, "width", "150");
-			add_location(img, file, 201, 36, 6531);
+			add_location(img, file, 200, 36, 6494);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, img, anchor);
@@ -6063,14 +6063,14 @@ function create_if_block_3(ctx) {
 		block,
 		id: create_if_block_3.name,
 		type: "if",
-		source: "(201:32) {#if artist.images.length > 0}",
+		source: "(200:32) {#if artist.images.length > 0}",
 		ctx
 	});
 
 	return block;
 }
 
-// (195:24) {#each artists as artist}
+// (194:24) {#each artists as artist}
 function create_each_block_1(ctx) {
 	let li;
 	let h3;
@@ -6094,10 +6094,10 @@ function create_each_block_1(ctx) {
 			t1 = space();
 			if (if_block) if_block.c();
 			t2 = space();
-			add_location(h3, file, 199, 32, 6409);
+			add_location(h3, file, 198, 32, 6372);
 			attr_dev(li, "class", "svelte-1vi2prd");
 			toggle_class(li, "selected", /*isArtistSelected*/ ctx[8](/*artist*/ ctx[17]));
-			add_location(li, file, 195, 28, 6190);
+			add_location(li, file, 194, 28, 6153);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, li, anchor);
@@ -6145,14 +6145,14 @@ function create_each_block_1(ctx) {
 		block,
 		id: create_each_block_1.name,
 		type: "each",
-		source: "(195:24) {#each artists as artist}",
+		source: "(194:24) {#each artists as artist}",
 		ctx
 	});
 
 	return block;
 }
 
-// (212:16) {#if formData.artistList.length > 0}
+// (211:16) {#if formData.artistList.length > 0}
 function create_if_block_1(ctx) {
 	let div;
 	let h5;
@@ -6183,11 +6183,11 @@ function create_if_block_1(ctx) {
 				each_blocks[i].c();
 			}
 
-			add_location(h5, file, 213, 24, 7020);
+			add_location(h5, file, 212, 24, 6983);
 			attr_dev(ul, "class", "svelte-1vi2prd");
-			add_location(ul, file, 214, 24, 7068);
+			add_location(ul, file, 213, 24, 7031);
 			attr_dev(div, "class", "mt-5");
-			add_location(div, file, 212, 20, 6977);
+			add_location(div, file, 211, 20, 6940);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, div, anchor);
@@ -6260,14 +6260,14 @@ function create_if_block_1(ctx) {
 		block,
 		id: create_if_block_1.name,
 		type: "if",
-		source: "(212:16) {#if formData.artistList.length > 0}",
+		source: "(211:16) {#if formData.artistList.length > 0}",
 		ctx
 	});
 
 	return block;
 }
 
-// (219:36) <Button                                         type="button"                                         color="danger"                                         class="delete-artist"                                         on:click={() =>                                             removeArtistSelection(artist)}                                         >
+// (218:36) <Button                                         type="button"                                         color="danger"                                         class="delete-artist"                                         on:click={() =>                                             removeArtistSelection(artist)}                                         >
 function create_default_slot_1(ctx) {
 	let t;
 
@@ -6287,14 +6287,14 @@ function create_default_slot_1(ctx) {
 		block,
 		id: create_default_slot_1.name,
 		type: "slot",
-		source: "(219:36) <Button                                         type=\\\"button\\\"                                         color=\\\"danger\\\"                                         class=\\\"delete-artist\\\"                                         on:click={() =>                                             removeArtistSelection(artist)}                                         >",
+		source: "(218:36) <Button                                         type=\\\"button\\\"                                         color=\\\"danger\\\"                                         class=\\\"delete-artist\\\"                                         on:click={() =>                                             removeArtistSelection(artist)}                                         >",
 		ctx
 	});
 
 	return block;
 }
 
-// (216:28) {#each formData.artistList as artist}
+// (215:28) {#each formData.artistList as artist}
 function create_each_block(ctx) {
 	let li;
 	let h5;
@@ -6330,9 +6330,9 @@ function create_each_block(ctx) {
 			t1 = space();
 			create_component(button.$$.fragment);
 			t2 = space();
-			add_location(h5, file, 217, 36, 7236);
+			add_location(h5, file, 216, 36, 7199);
 			attr_dev(li, "class", "selected-artist svelte-1vi2prd");
-			add_location(li, file, 216, 32, 7171);
+			add_location(li, file, 215, 32, 7134);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, li, anchor);
@@ -6373,14 +6373,14 @@ function create_each_block(ctx) {
 		block,
 		id: create_each_block.name,
 		type: "each",
-		source: "(216:28) {#each formData.artistList as artist}",
+		source: "(215:28) {#each formData.artistList as artist}",
 		ctx
 	});
 
 	return block;
 }
 
-// (234:20) <Button                         type="submit"                         color="primary"                         block="true"                         class="register-btn">
+// (233:20) <Button                         type="submit"                         color="primary"                         block="true"                         class="register-btn">
 function create_default_slot(ctx) {
 	let t;
 
@@ -6400,7 +6400,7 @@ function create_default_slot(ctx) {
 		block,
 		id: create_default_slot.name,
 		type: "slot",
-		source: "(234:20) <Button                         type=\\\"submit\\\"                         color=\\\"primary\\\"                         block=\\\"true\\\"                         class=\\\"register-btn\\\">",
+		source: "(233:20) <Button                         type=\\\"submit\\\"                         color=\\\"primary\\\"                         block=\\\"true\\\"                         class=\\\"register-btn\\\">",
 		ctx
 	});
 
@@ -6475,7 +6475,7 @@ function create_fragment(ctx) {
 	return block;
 }
 
-const register_url = "/register";
+const update_url = "/user/update";
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
@@ -6578,7 +6578,7 @@ function instance($$self, $$props, $$invalidate) {
 		};
 
 		try {
-			const response = await fetch(register_url, requestOptions);
+			const response = await fetch(update_url, requestOptions);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -6586,8 +6586,6 @@ function instance($$self, $$props, $$invalidate) {
 		} catch(error) {
 			console.error("Error:", error); // 成功した後の処理をここに書く
 		}
-
-		alert("request success");
 	}
 
 	onMount(() => {
@@ -6640,7 +6638,7 @@ function instance($$self, $$props, $$invalidate) {
 		toggleArtistSelection,
 		isArtistSelected,
 		removeArtistSelection,
-		register_url,
+		update_url,
 		showUserForm,
 		handleSubmit
 	});
