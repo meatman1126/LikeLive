@@ -8,11 +8,16 @@ import com.example.bookstore.entity.UserArtist;
 import com.example.bookstore.entity.key.UserArtistId;
 import com.example.bookstore.repository.jpa.UserArtistRepository;
 import com.example.bookstore.repository.jpa.UserRepository;
+import com.example.bookstore.service.util.StorageService;
 import com.example.bookstore.service.util.UserUtilService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -28,6 +33,9 @@ public class UserService {
     @Autowired
     UserArtistRepository userArtistRepository;
 
+    @Autowired
+    StorageService storageService;
+
 
     /**
      * 指定されたユーザ情報を取得します。
@@ -40,6 +48,16 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(
                 () -> new UserNotFoundException("User :" + id + " not found")
         );
+    }
+
+    /**
+     * subjectに紐づくユーザ情報を取得します。
+     *
+     * @param subject ユーザ毎のid
+     * @return ユーザ情報
+     */
+    public User findBySubject(String subject) throws UserNotFoundException {
+        return userRepository.findBySubject(subject).orElse(null);
     }
 
     /**
@@ -69,6 +87,16 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * ユーザを新規登録します。
+     *
+     * @param input ユーザ情報
+     * @return 登録されたユーザ情報
+     */
+    public User register(User input) {
+        return userRepository.save(input);
+    }
+
 
     /**
      * ユーザ情報の初期更新を行います。
@@ -77,24 +105,41 @@ public class UserService {
      * @return 更新後のユーザ情報
      */
     @Transactional
-    public User initialUpdate(UserRegistrationForm input) {
+    public User initialUpdate(UserRegistrationForm input, MultipartFile profileImage) {
+
+        String filePath = null;
+        // プロフィール画像の保存処理
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // ファイル名を一意にするためにUUIDを使用する（ユーザIDも利用可能）
+            String fileName = UUID.randomUUID().toString() + "_" + profileImage.getOriginalFilename();
+
+            // ファイルの保存処理
+            filePath = storageService.saveFile(profileImage, fileName);
+
+            // 保存したファイルのパスを更新情報にセット
+            input.setProfileImagePath(filePath);
+        }
         // ユーザ情報の更新
         User currentUser = userUtilService.getCurrentUser();
-        userRepository.updateDisplayName(currentUser.getId(), input.getUserName());
+        LocalDateTime now = LocalDateTime.now();
+        userRepository.updateProfile(currentUser.getId(), input.getUserName(), filePath, now);
 
         User updatedUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
 
-        // アーティスト情報、ユーザ、アーティストリレーション情報の登録
-        for (Artist artist : input.getArtistList()) {
-            Artist registered = artistService.saveArtist(artist);
-            UserArtist userArtist = UserArtist.builder()
-                    .id(new UserArtistId())
-                    .user(updatedUser)
-                    .artist(registered)
-                    .createdBy(updatedUser.getId().toString())
-                    .updatedBy(updatedUser.getId().toString())
-                    .build();
-            userArtistRepository.save(userArtist);
+        if (input.getArtistList() != null && !input.getArtistList().isEmpty()) {
+            // アーティスト情報、ユーザ、アーティストリレーション情報の登録
+            for (Artist artist : input.getArtistList()) {
+                Artist registered = artistService.saveArtist(artist);
+                UserArtist userArtist = UserArtist.builder()
+                        .id(new UserArtistId())
+                        .user(updatedUser)
+                        .artist(registered)
+                        .createdBy(updatedUser.getId().toString())
+                        .updatedBy(updatedUser.getId().toString())
+                        .build();
+                userArtistRepository.save(userArtist);
+            }
+
         }
         return updatedUser;
     }

@@ -1,19 +1,26 @@
 package com.example.bookstore.restController;
 
 import com.example.bookstore.Exception.UserNotFoundException;
+import com.example.bookstore.dto.GoogleUserInfo;
 import com.example.bookstore.dto.form.user.UserDeleteForm;
 import com.example.bookstore.dto.form.user.UserRegistrationForm;
 import com.example.bookstore.dto.form.user.UserUpdateForm;
 import com.example.bookstore.dto.form.user.UsersDeleteForm;
 import com.example.bookstore.entity.User;
+import com.example.bookstore.service.GoogleService;
 import com.example.bookstore.service.UserService;
 import com.example.bookstore.service.util.UserUtilService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@RequestMapping("/api")
 public class RestUserController {
 
     @Autowired
@@ -22,15 +29,72 @@ public class RestUserController {
     @Autowired
     UserUtilService userUtilService;
 
+    @Autowired
+    private GoogleService googleService;
+
+    /**
+     * ログインしたユーザ情報を取得します。初回ログインでDB未登録の場合DB登録を行います。
+     * ログイン後に呼び出されることを想定しています。
+     *
+     * @param authorizationHeader ヘッダーに含まれる認証情報
+     * @return ログインユーザ情報
+     */
+    @PostMapping("/login/after")
+    public ResponseEntity<User> getLoginUser(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            // DBにユーザが存在するか確認
+            User user = userUtilService.getCurrentUser();
+
+            if (user == null) {
+                // ユーザが存在しない場合、新規に登録
+
+                // AuthorizationヘッダーからBearerトークンを抽出
+                String accessToken = extractToken(authorizationHeader);
+
+                // Google APIを呼び出してユーザ情報を取得
+                GoogleUserInfo googleUserInfo = googleService.getUserInfo(accessToken);
+                user = User.builder()
+                        .displayName(googleUserInfo.getGivenName())
+                        .subject(googleUserInfo.getSub())
+                        .enabled(true)
+                        .createdBy("System")
+                        .updatedBy("System")
+                        .build();
+                userService.register(user);
+            }
+            // ユーザ情報を返却
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            // エラーが発生した場合、適切なステータスコードとメッセージを返却
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+    }
+
     /**
      * ユーザ情報を更新します。
      *
      * @param formData ユーザ情報（ユーザ名および好きなアーティスト）
      * @return ユーザ更新処理の結果を返します。
      */
+//    @PostMapping("/user/update")
+//    public ResponseEntity<User> updateUser(@RequestBody UserRegistrationForm formData) {
+//        User updatedUser = userService.initialUpdate(formData);
+//        return ResponseEntity.ok(updatedUser);
+//    }
+
+    /**
+     * ユーザ情報を更新します。
+     *
+     * @param formData     ユーザ情報（ユーザ名および好きなアーティスト）
+     * @param profileImage プロフィール画像ファイル
+     * @return ユーザ更新処理の結果を返します。
+     */
     @PostMapping("/user/update")
-    public ResponseEntity<User> updateUser(@RequestBody UserRegistrationForm formData) {
-        User updatedUser = userService.initialUpdate(formData);
+    public ResponseEntity<User> updateUser(
+            @ModelAttribute UserRegistrationForm formData,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage
+    ) {
+        User updatedUser = userService.initialUpdate(formData, profileImage);
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -50,6 +114,22 @@ public class RestUserController {
     }
 
     /**
+     * 現在ログインしているユーザ情報を取得します。
+     *
+     * @return ログイン中のユーザ情報
+     */
+    @GetMapping("/user/my")
+    public ResponseEntity<User> getUser() {
+        try {
+            User currentUser = userService.findBySubject(
+                    SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+            return ResponseEntity.ok(currentUser);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
      * 指定されたユーザ情報を取得します。
      *
      * @param id 対象のユーザID
@@ -58,7 +138,10 @@ public class RestUserController {
     @GetMapping("/user/{id}")
     public ResponseEntity<User> getUserProfile(@PathVariable Long id) {
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println(auth.getPrincipal());
             User user = userService.getUserInfo(id);
+//            User user1 = userUtilService.getCurrentUser();
             return ResponseEntity.ok(user);
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -106,6 +189,15 @@ public class RestUserController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    // AuthorizationヘッダーからBearerトークンを抽出するヘルパーメソッド
+    private String extractToken(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        } else {
+            throw new IllegalArgumentException("Invalid Authorization header");
+        }
     }
 
 
