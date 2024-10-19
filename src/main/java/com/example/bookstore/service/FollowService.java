@@ -1,5 +1,7 @@
 package com.example.bookstore.service;
 
+import com.example.bookstore.dto.repository.FollowRepositoryDto;
+import com.example.bookstore.dto.view.FollowViewDto;
 import com.example.bookstore.entity.Follow;
 import com.example.bookstore.entity.Notification;
 import com.example.bookstore.entity.User;
@@ -15,39 +17,57 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * フォローサービス
+ */
 @Service
 public class FollowService {
 
+    /**
+     * フォローリポジトリ
+     */
     @Autowired
     private FollowRepository followRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * 通知サービス
+     */
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * ユーザリポジトリ
+     */
     @Autowired
     private UserRepository userRepository;
 
     /**
      * ユーザ間のフォロー関係を登録します。
      *
-     * @param followedId フォロー対象のユーザID
+     * @param targetId フォロー対象のユーザID
      */
     @Transactional
-    public void followUser(Long followedId) {
+    public void followUser(Long targetId) {
         //フォロー関係の登録
+        User currentUser = userUtilService.getCurrentUser();
         Follow follow = Follow.builder()
-                .follower(userUtilService.getCurrentUser())
-                .followed(userRepository.findById(followedId).orElseThrow())
+                .follower(currentUser)
+                .followed(userRepository.findById(targetId).orElseThrow())
                 .followAt(LocalDateTime.now())
+                .createdBy(currentUser.getId().toString())
+                .updatedBy(currentUser.getId().toString())
                 .build();
 
         followRepository.save(follow);
 
         //通知データの登録
-        saveNotificationOfFollow(followedId);
+        saveNotificationOfFollow(targetId);
 
     }
 
@@ -55,64 +75,58 @@ public class FollowService {
     /**
      * ユーザ間のフォロー関係を削除します。
      *
-     * @param followedId フォロー解除対象のユーザID
+     * @param targetId フォロー解除対象のユーザID
      */
     @Transactional
-    public void unfollowUser(Long followedId) {
+    public void unfollowUser(Long targetId) {
         //フォロー関係の削除
-        followRepository.unfollow(userUtilService.getCurrentUser().getId(), followedId);
+        followRepository.unfollow(userUtilService.getCurrentUser().getId(), targetId);
         //通知データの削除（対象通知が未読の場合）
-        deleteNotificationOfFollow(followedId);
+        deleteNotificationOfFollow(targetId);
     }
 
     /**
-     * 指定されたユーザがフォローされているユーザを取得します。
+     * ログインユーザのフォロワーを取得します。
+     *
+     * @return ログインユーザのフォロワー
+     */
+    public List<User> getFollowers() {
+        return followRepository.findFollowers(userUtilService.getCurrentUser().getId());
+    }
+
+    /**
+     * 指定されたユーザがフォロー中のユーザを取得します。
      *
      * @param userId ユーザID
      * @return 指定されたユーザがフォローされているユーザ
      */
-    public List<User> getFollowedUsers(Long userId) {
-        return followRepository.findFollowedUsers(userId);
+    public List<FollowViewDto> getFollowedUsersInfo(Long userId) {
+        List<FollowRepositoryDto> repositoryDtoList = followRepository.findFollowedUsersInfo(userId);
+
+        return FollowViewDto.build(repositoryDtoList);
     }
 
     /**
-     * ログインユーザがフォローされているユーザを取得します。
-     *
-     * @return ログインユーザがフォローされているユーザ
-     */
-    public List<User> getFollowedUsers() {
-        return getFollowedUsers(userUtilService.getCurrentUser().getId());
-    }
-
-
-    /**
-     * 指定したユーザがフォローしているユーザを取得します。
+     * 指定したユーザのフォロワー情報を取得します。
      *
      * @param userId ユーザID
      * @return 指定したユーザがフォローしているユーザ
      */
-    public List<User> getFollowers(Long userId) {
-        return followRepository.findFollowers(userId);
-    }
+    public List<FollowViewDto> getFollowersInfo(Long userId) {
+        List<FollowRepositoryDto> repositoryDtoList = followRepository.findFollowersInfo(userId);
 
-    /**
-     * ログインユーザがフォローしているユーザを取得します。
-     *
-     * @return ログインユーザがフォローしているユーザ
-     */
-    public List<User> getFollowers() {
-        return getFollowers(userUtilService.getCurrentUser().getId());
+        return FollowViewDto.build(repositoryDtoList);
     }
 
     /**
      * 指定されたユーザに対するフォロー通知を作成します。
      *
-     * @param followedId 通知対象ユーザ
+     * @param targetId 通知対象ユーザ
      */
-    private void saveNotificationOfFollow(Long followedId) {
+    private void saveNotificationOfFollow(Long targetId) {
         User triggerUser = userUtilService.getCurrentUser();
         Notification notification = Notification.builder()
-                .targetUser(userRepository.findById(followedId).orElseThrow())
+                .targetUser(userRepository.findById(targetId).orElseThrow())
                 .notificationType(NotificationType.FOLLOW)
                 .relatedBlog(null)
                 .notificationCreatedAt(LocalDateTime.now())
@@ -130,12 +144,12 @@ public class FollowService {
     /**
      * 指定されたユーザに対するフォロー通知が未読の場合削除します。
      *
-     * @param followedId 通知対象ユーザ
+     * @param targetId 通知対象ユーザ
      */
-    private void deleteNotificationOfFollow(Long followedId) {
+    private void deleteNotificationOfFollow(Long targetId) {
         User currentUser = userUtilService.getCurrentUser();
         //削除されたフォローに関する通知を検索し未読なら削除する
-        List<Notification> notifications = notificationService.getUnreadFollowNotifications(followedId, currentUser.getId());
+        List<Notification> notifications = notificationService.getUnreadFollowNotifications(targetId, currentUser.getId());
         if (!notifications.isEmpty()) {
             notificationService.deleteNotifications(
                     notifications.stream().map(Notification::getId).collect(Collectors.toList())

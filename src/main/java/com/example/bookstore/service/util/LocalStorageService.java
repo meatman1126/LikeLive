@@ -9,6 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+/**
+ * TODO しっかりコメントを書く
+ */
 public class LocalStorageService implements StorageService {
 
     @Value("${storage.local.upload-dir}")
@@ -24,7 +27,7 @@ public class LocalStorageService implements StorageService {
 
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            return filePath.toString(); // ローカルパスを返す
+            return fileName;
         } catch (IOException e) {
             throw new RuntimeException("ファイル保存中にエラーが発生しました", e);
         }

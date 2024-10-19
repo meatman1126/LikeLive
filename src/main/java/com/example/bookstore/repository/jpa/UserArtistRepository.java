@@ -5,11 +5,15 @@ import com.example.bookstore.entity.User;
 import com.example.bookstore.entity.UserArtist;
 import com.example.bookstore.entity.key.UserArtistId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+/**
+ * ユーザアーティストリレーションインターフェース
+ */
 public interface UserArtistRepository extends JpaRepository<UserArtist, UserArtistId> {
 
 
@@ -43,4 +47,25 @@ public interface UserArtistRepository extends JpaRepository<UserArtist, UserArti
             "AND ua.user.id != :userId " +
             "ORDER BY ua.user.id ASC, ua.artist.id ASC")
     List<UserArtist> findUserSameFavorite(@Param("userId") Long userId);
+
+    /**
+     * 指定されたユーザIDとアーティストIDに基づいて、該当するリレーションが存在するかを確認します。
+     *
+     * @param userId   ユーザID
+     * @param artistId アーティストID
+     * @return 該当するリレーションが存在する場合true、それ以外の場合false
+     */
+    @Query("SELECT CASE WHEN COUNT(ua) > 0 THEN true ELSE false END " +
+            "FROM UserArtist ua " +
+            "WHERE ua.user.id = :userId AND ua.artist.id = :artistId")
+    boolean existsByUserIdAndArtistId(@Param("userId") Long userId, @Param("artistId") String artistId);
+
+    /**
+     * 指定されたユーザIDに紐づくリレーション情報を全て削除します。
+     *
+     * @param userId ユーザID
+     */
+    @Modifying
+    @Query("DELETE FROM UserArtist ua WHERE ua.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

@@ -15,15 +15,27 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Restコメントコントローラ
+ */
 @RestController
 public class RestCommentController {
 
+    /**
+     * コメントサービス
+     */
     @Autowired
     private CommentService commentService;
 
+    /**
+     * ブログリポジトリ
+     */
     @Autowired
     private BlogRepository blogRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
@@ -116,7 +128,7 @@ public class RestCommentController {
      */
     @PostMapping("/comment/delete")
     public ResponseEntity<Void> deleteComment(@RequestBody CommentDeleteForm form) {
-        boolean isDeleted = commentService.deleteComment(form.getCommentId());
+        Boolean isDeleted = commentService.deleteComment(form.getCommentId());
         if (isDeleted) {
             return ResponseEntity.ok().build();
         } else {

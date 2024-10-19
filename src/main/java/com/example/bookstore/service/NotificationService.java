@@ -10,12 +10,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 通知サービス
+ */
 @Service
 public class NotificationService {
 
+    /**
+     * 通知リポジトリ
+     */
     @Autowired
     private NotificationRepository notificationRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
@@ -118,5 +127,15 @@ public class NotificationService {
     @Transactional
     public void deleteNotifications(List<Long> notificationIds) {
         notificationRepository.deleteNotificationsByIds(notificationIds, userUtilService.getCurrentUserId());
+    }
+
+    /**
+     * 指定されたユーザに関連する未読通知をすべて既読にマークします。
+     *
+     * @param userId ユーザID
+     */
+    @Transactional
+    public void markAllUnreadNotificationsAsRead(Long userId) {
+        notificationRepository.markAllUnreadNotifications(userId, userId.toString());
     }
 }

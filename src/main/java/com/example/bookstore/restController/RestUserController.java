@@ -6,6 +6,7 @@ import com.example.bookstore.dto.form.user.UserDeleteForm;
 import com.example.bookstore.dto.form.user.UserRegistrationForm;
 import com.example.bookstore.dto.form.user.UserUpdateForm;
 import com.example.bookstore.dto.form.user.UsersDeleteForm;
+import com.example.bookstore.dto.view.ProfileViewDto;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.service.GoogleService;
 import com.example.bookstore.service.UserService;
@@ -19,16 +20,28 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Restユーザコントローラ
+ */
 @RestController
 @RequestMapping("/api")
 public class RestUserController {
 
+    /**
+     * ユーザサービス
+     */
     @Autowired
     UserService userService;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     UserUtilService userUtilService;
 
+    /**
+     * Googleサービス
+     */
     @Autowired
     private GoogleService googleService;
 
@@ -71,30 +84,19 @@ public class RestUserController {
     }
 
     /**
-     * ユーザ情報を更新します。
-     *
-     * @param formData ユーザ情報（ユーザ名および好きなアーティスト）
-     * @return ユーザ更新処理の結果を返します。
-     */
-//    @PostMapping("/user/update")
-//    public ResponseEntity<User> updateUser(@RequestBody UserRegistrationForm formData) {
-//        User updatedUser = userService.initialUpdate(formData);
-//        return ResponseEntity.ok(updatedUser);
-//    }
-
-    /**
-     * ユーザ情報を更新します。
+     * ユーザ情報を更新します。(初回更新想定)
      *
      * @param formData     ユーザ情報（ユーザ名および好きなアーティスト）
      * @param profileImage プロフィール画像ファイル
      * @return ユーザ更新処理の結果を返します。
      */
-    @PostMapping("/user/update")
+    @PostMapping("/user/update/initial")
     public ResponseEntity<User> updateUser(
             @ModelAttribute UserRegistrationForm formData,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage
     ) {
         User updatedUser = userService.initialUpdate(formData, profileImage);
+//        User updatedUser = userService.getUserInfo(userUtilService.getCurrentUser().getId());
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -149,17 +151,44 @@ public class RestUserController {
     }
 
     /**
+     * ログインユーザのプロフィール、アーティスト、およびブログ情報を取得します
+     *
+     * @return ResponseEntity<ProfileRepositoryDto> ユーザのプロフィール情報
+     */
+    @GetMapping("/user/profile")
+    public ResponseEntity<ProfileViewDto> getUserProfile() {
+        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId());
+        return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * 指定されたユーザのプロフィール、アーティスト、およびブログ情報を取得します
+     *
+     * @param targetUserId プロフィールを取得したいユーザID
+     * @return ResponseEntity<ProfileRepositoryDto> 指定されたユーザのプロフィール情報
+     */
+    @GetMapping("/user/profile/{targetUserId}")
+    public ResponseEntity<ProfileViewDto> getOthersProfile(@PathVariable Long targetUserId) {
+        ProfileViewDto profile = userService.getUserProfile(targetUserId);
+        return ResponseEntity.ok(profile);
+    }
+
+    /**
      * ユーザプロフィール情報を更新します。
      *
-     * @param form ユーザ更新情報
+     * @param form         ユーザ更新情報
+     * @param profileImage プロフィール画像
      * @return 更新後のユーザ情報
      */
-    @PutMapping("/{userId}/profile")
-    public ResponseEntity<User> updateUserProfile(
-            @RequestBody UserUpdateForm form) {
+    @PostMapping("/user/update")
+    public ResponseEntity<ProfileViewDto> updateUserProfile(
+            @ModelAttribute UserUpdateForm form,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
 
-        User updatedUser = userService.updateUserProfile(form.getDisplayName(), form.getSelfIntroduction(), form.getProfileImageUrl());
-        return ResponseEntity.ok(updatedUser);
+        User updatedUser = userService.updateUserProfile(form, profileImage);
+        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId());
+
+        return ResponseEntity.ok(profile);
     }
 
     /**

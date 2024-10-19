@@ -4,6 +4,8 @@ import com.example.bookstore.dto.form.blog.BlogCountUpdateForm;
 import com.example.bookstore.dto.form.blog.BlogDeleteForm;
 import com.example.bookstore.dto.form.blog.BlogRegistrationForm;
 import com.example.bookstore.dto.form.blog.BlogUpdateForm;
+import com.example.bookstore.dto.view.BlogInfoViewDto;
+import com.example.bookstore.dto.view.DashboardViewDto;
 import com.example.bookstore.entity.Blog;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.service.BlogService;
@@ -17,11 +19,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Restブログコントローラ
+ */
 @RestController
+@RequestMapping("/api")
 public class RestBlogController {
+
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     UserUtilService userUtilService;
 
+    /**
+     * ブログサービス
+     */
     @Autowired
     BlogService blogService;
 
@@ -60,6 +73,33 @@ public class RestBlogController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 指定されたブログ情報を取得します。
+     *
+     * @param blogId ブログID
+     * @return ブログ情報
+     */
+    @GetMapping("/blog/{blogId}")
+    public ResponseEntity<BlogInfoViewDto> getBlog(@PathVariable Long blogId) {
+        BlogInfoViewDto viewDto = blogService.findBlogInfo(blogId);
+        return ResponseEntity.ok(viewDto);
+    }
+
+
+    /**
+     * 自分が作成したブログを除外し、フォローしているユーザーのブログを優先的に取得する
+     * <p>
+     * * @return ブログのリスト
+     */
+    @GetMapping("/blog/interest")
+    public ResponseEntity<List<DashboardViewDto>> getBlogsOfInterest() {
+        // サービスメソッドを呼び出して、ブログデータを取得
+        List<DashboardViewDto> viewDtoList = blogService.findInterestBlogs(userUtilService.getCurrentUser().getId());
+
+        // ブログリストをレスポンスとして返す
+        return ResponseEntity.ok(viewDtoList);
+    }
+
 
     /**
      * ブログ情報を新規登録します。
@@ -76,6 +116,7 @@ public class RestBlogController {
                 .title(form.getTitle())
                 .content(form.getContent())
                 .author(currentUser)
+                .status(form.getStatus())
                 .blogCreatedTime(now)
                 .blogUpdatedTime(now)
                 .tags(form.getTags())
@@ -91,10 +132,8 @@ public class RestBlogController {
                 .updatedBy(currentUserId)
                 .build();
 
-        Blog createdBlog = blogService.createBlog(blog);
-        //TODO ブログに画像や動画などのメディアコンテンツが含まれている場合保存する処理を追加する
+        Blog createdBlog = blogService.createBlog(blog, form.getArtistIdList());
         return ResponseEntity.ok(createdBlog);
-
     }
 
     /**
@@ -113,15 +152,17 @@ public class RestBlogController {
                 .title(form.getTitle())
                 .content(form.getContent())
                 .blogUpdatedTime(now)
+                .status(form.getStatus())
                 .tags(form.getTags())
                 .thumbnailUrl(form.getThumbnailUrl())
-                .slug(form.getSlug())// 修正が必要の見込み
+                .slug(form.getSlug())
                 .category(form.getCategory())
                 .setlist(form.getSetlist())
                 .updatedBy(currentUserId)
+                .updatedAt(now)
                 .build();
 
-        Blog updatedBlog = blogService.updatedBlog(blog);
+        Blog updatedBlog = blogService.updatedBlog(blog, form.getArtistIdList());
         return ResponseEntity.ok(updatedBlog);
 
     }
@@ -160,16 +201,8 @@ public class RestBlogController {
      */
     @PostMapping("/blog/like")
     public ResponseEntity<Integer> updateLikeCount(@RequestBody BlogCountUpdateForm form) {
-        Integer updatedLikeCount = blogService.updatedLikeCount(form.getId(), form.isCancel());
+        Integer updatedLikeCount = blogService.updatedLikeCount(form.getId(), form.getIsCancel());
         return ResponseEntity.ok(updatedLikeCount);
 
     }
-
-    //コメント回数の更新（アップ）は基本的にコメントの登録とともに行われるためそこと合わせて、キャンセルの口を作るが適切か
-//    @PostMapping("/blog/comment")
-//    public ResponseEntity<Integer> updateCommentCount(@RequestBody BlogCountUpdateForm form) {
-//        Integer updatedViewCount = blogService.updatedViewCount(form.getId());
-//        return ResponseEntity.ok(updatedViewCount);
-//
-//    }
 }

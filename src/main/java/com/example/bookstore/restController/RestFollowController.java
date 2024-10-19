@@ -1,66 +1,78 @@
 package com.example.bookstore.restController;
 
-import com.example.bookstore.entity.User;
+import com.example.bookstore.dto.view.FollowViewDto;
 import com.example.bookstore.service.FollowService;
+import com.example.bookstore.service.util.UserUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Restフォローコントローラ
+ */
 @RestController
+@RequestMapping("/api")
 public class RestFollowController {
 
+    /**
+     * フォローサービス
+     */
     @Autowired
     private FollowService followService;
 
     /**
+     * ユーザユーティルサービス
+     */
+    @Autowired
+    private UserUtilService userUtilService;
+
+    /**
      * ログインユーザが指定したユーザをフォローします。
      *
-     * @param followedId フォローするユーザのID
+     * @param targetId フォローするユーザのID
      * @return 成功時はステータス200を返す
      */
-    @PostMapping("/follow/{followedId}")
-    public ResponseEntity<Void> followUser(@PathVariable Long followedId) {
-        followService.followUser(followedId);
+    @PostMapping("/follow/{targetId}")
+    public ResponseEntity<Void> followUser(@PathVariable Long targetId) {
+        followService.followUser(targetId);
         return ResponseEntity.ok().build();
     }
 
     /**
      * ログインユーザが指定したユーザのフォローを解除します。
      *
-     * @param followedId フォロー解除するユーザのID
+     * @param targetId フォロー解除するユーザのID
      * @return 成功時はステータス200を返す
      */
-    @PostMapping("/follow/cancel/{followedId}")
-    public ResponseEntity<Void> unfollowUser(@PathVariable Long followedId) {
-        followService.unfollowUser(followedId);
+    @PostMapping("/follow/cancel/{targetId}")
+    public ResponseEntity<Void> unfollowUser(@PathVariable Long targetId) {
+        followService.unfollowUser(targetId);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * ログインユーザがフォローしているユーザを取得します。
+     * ログインユーザがフォロー中のユーザを取得します。
      *
      * @return フォローしているユーザのリスト
      */
     @GetMapping("/follow/followed")
-    public ResponseEntity<List<User>> getFollowedUsers() {
-        List<User> followedUsers = followService.getFollowedUsers();
+    public ResponseEntity<List<FollowViewDto>> getFollowedUsers() {
+        List<FollowViewDto> followedUsers = followService.getFollowedUsersInfo(userUtilService.getCurrentUser().getId());
         return ResponseEntity.ok(followedUsers);
     }
 
     /**
+     * 多分使用しないと思う
      * 指定されたユーザがフォローしているユーザを取得します。
      *
-     * @param userId ユーザID
+     * @param targetUserId ユーザID
      * @return フォローしているユーザのリスト
      */
-    @GetMapping("/follow/followed/{userId}")
-    public ResponseEntity<List<User>> getFollowedUsersByUserId(@PathVariable Long userId) {
-        List<User> followedUsers = followService.getFollowedUsers(userId);
+    @GetMapping("/follow/followed/{targetUserId}")
+    public ResponseEntity<List<FollowViewDto>> getFollowedUsersByUserId(@PathVariable Long targetUserId) {
+        List<FollowViewDto> followedUsers = followService.getFollowedUsersInfo(targetUserId);
         return ResponseEntity.ok(followedUsers);
     }
 
@@ -70,20 +82,20 @@ public class RestFollowController {
      * @return フォロワーのリスト
      */
     @GetMapping("/follow/followers")
-    public ResponseEntity<List<User>> getFollowers() {
-        List<User> followers = followService.getFollowers();
+    public ResponseEntity<List<FollowViewDto>> getFollowers() {
+        List<FollowViewDto> followers = followService.getFollowersInfo(userUtilService.getCurrentUser().getId());
         return ResponseEntity.ok(followers);
     }
 
     /**
      * 指定されたユーザをフォローしているユーザを取得します。
      *
-     * @param userId ユーザID
+     * @param targetUserId ユーザID
      * @return フォロワーのリスト
      */
-    @GetMapping("/follow/followers/{userId}")
-    public ResponseEntity<List<User>> getFollowersByUserId(@PathVariable Long userId) {
-        List<User> followers = followService.getFollowers(userId);
+    @GetMapping("/follow/followers/{targetUserId}")
+    public ResponseEntity<List<FollowViewDto>> getFollowersByUserId(@PathVariable Long targetUserId) {
+        List<FollowViewDto> followers = followService.getFollowersInfo(targetUserId);
         return ResponseEntity.ok(followers);
     }
 }

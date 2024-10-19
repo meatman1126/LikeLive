@@ -1,50 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Footer from "../component/Fotter";
 import Header from "../component/Header";
 import UserRegistrationModal from "../component/UserRegistrationModal";
-import user_icon from "../images/user_icon.png";
+import config from "../config/properties";
+import fetchWithAuth from "../util/fetchUtil";
+import { useLoading } from "../util/LoadingContext";
 
 function Dashboard({ isAuthenticated, setIsAuthenticated }) {
   const location = useLocation();
+  const [userInfo, setUserInfo] = useState(location.state?.userInfo || null); // location.stateから値を受け取る
   const [isFirstLogin, setIsFirstLogin] = useState(
-    location.state?.isFirstLogin || false
+    location.state?.isFirstLogin || false //TODO　falseが正しいよ
   );
-  console.log(isFirstLogin);
+  // ローディング制御メソッドを取得
+  const { startLoading, stopLoading } = useLoading();
 
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "ブログ投稿1",
-      user: { name: "ユーザーA", icon: user_icon, isFollowed: true },
-      date: "2024-09-28",
-    },
-    {
-      id: 2,
-      title: "ブログ投稿2",
-      user: { name: "ユーザーB", icon: user_icon, isFollowed: false },
-      date: "2024-09-27",
-    },
-    {
-      id: 3,
-      title: "ブログ投稿3",
-      user: { name: "ユーザーC", icon: user_icon, isFollowed: true },
-      date: "2024-09-26",
-    },
-    {
-      id: 4,
-      title: "ブログ投稿4",
-      user: { name: "ユーザーD", icon: user_icon, isFollowed: false },
-      date: "2024-09-25",
-    },
-    {
-      id: 5,
-      title: "ブログ投稿5",
-      user: { name: "ユーザーE", icon: user_icon, isFollowed: false },
-      date: "2024-10-01",
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
   const [visiblePosts, setVisiblePosts] = useState(4);
+
+  // APIからpostsを取得する処理
+  useEffect(() => {
+    // APIを呼び出してデータを取得
+    const fetchPosts = async () => {
+      try {
+        startLoading();
+        const response = await fetchWithAuth(
+          `${config.apiBaseUrl}/api/blog/interest`,
+          {
+            method: "GET",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPosts(data); // 取得したデータをpostsにセット
+        } else {
+          console.error("Failed to fetch posts");
+        }
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+      stopLoading();
+    };
+    fetchPosts();
+  }, []);
 
   const showMorePosts = () => {
     setVisiblePosts(Math.min(visiblePosts + 7, posts.length));
@@ -55,13 +54,17 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
       <Header
         isAuthenticated={isAuthenticated}
         setIsAuthenticated={setIsAuthenticated}
+        userInfo={userInfo ? userInfo : undefined} // userInfoがnullの場合は渡さない
       />
-      {/* モーダルの表示 */}
-      <UserRegistrationModal
-        isOpen={isFirstLogin} // 初回ログイン時のみ表示
-        onClose={() => setIsFirstLogin(false)}
-        initialUsername="初期ユーザ名"
-      />
+      {isFirstLogin && (
+        // 初回ログイン時のみユーザ情報登録モーダルを表示する
+        <UserRegistrationModal
+          isOpen={isFirstLogin} // 初回ログイン時のみ表示
+          onClose={() => setIsFirstLogin(false)}
+          initialUsername={userInfo.displayName}
+          setUserInfo={setUserInfo}
+        />
+      )}
       <div className="p-6 bg-gray-50 min-h-screen">
         {/* ダッシュボードタイトル */}
         <div className="mb-6">
@@ -71,7 +74,7 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
         </div>
 
         {/* メインコンテンツ */}
-        <main className="mx-auto max-w-4xl">
+        <main className="mx-auto max-w-5xl">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-semibold text-gray-800">
               おすすめの新着投稿
@@ -86,25 +89,27 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
                 className="post-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
                 onClick={() => (window.location.href = `/blog/${post.id}`)}
               >
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {post.title}
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  {post.blogTitle}
                 </h3>
                 <div className="flex items-center mb-4">
                   <img
-                    src={post.user.icon}
-                    alt={`${post.user.name}のアイコン`}
+                    src={`${config.apiBaseUrl}/api/public/files/${post.profileImageUrl}`}
+                    alt={`${post.profileImageUrl}のアイコン`}
                     className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
                   />
-                  <div className="text-sm">
+                  <div className="text-base flex justify-between w-full">
                     <p className="font-semibold text-gray-700">
-                      {post.user.name}
-                      <span className="ml-4 text-xs text-gray-500">
-                        {post.user.isFollowed ? "フォロー中" : ""}
-                      </span>
+                      {post.authorName}
                     </p>
+                    <span className="text-xs text-gray-500">
+                      {post.isFollowAuthor ? "フォロー中" : ""}
+                    </span>
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm">投稿日: {post.date}</p>
+                <p className="text-gray-500 text-sm text-right">
+                  投稿日: {post.blogCreatedTime}
+                </p>
               </div>
             ))}
           </div>

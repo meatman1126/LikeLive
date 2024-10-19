@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class BlogCountUpdateForm {
-    
+
     private Long id;
-    private boolean isCancel;
+    private Boolean isCancel;
 }

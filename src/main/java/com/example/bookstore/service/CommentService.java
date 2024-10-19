@@ -16,18 +16,33 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * コメントサービス
+ */
 @Service
 public class CommentService {
 
+    /**
+     * コメントリポジトリ
+     */
     @Autowired
     private CommentRepository commentRepository;
 
+    /**
+     * コメントツリーリポジトリ
+     */
     @Autowired
     private CommentTreeRepository commentTreeRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * 通知サービス
+     */
     @Autowired
     private NotificationService notificationService;
 
@@ -117,7 +132,7 @@ public class CommentService {
      * @return 削除成功時にtrue、失敗時にfalseを返す
      */
     @Transactional
-    public boolean deleteComment(Long id) {
+    public Boolean deleteComment(Long id) {
         //コメントの削除処理
         int deletedRows = commentRepository.deleteCommentById(id, userUtilService.getCurrentUserId());
         //削除されたコメントに関する通知の削除

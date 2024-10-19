@@ -1,13 +1,26 @@
 "use client";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import config from "../config/properties";
 import icon from "../images/icon_header.png";
+import fetchWithAuth from "../util/fetchUtil";
 import LoginButton from "./LoginButton";
 import NotificationList from "./NotificationList";
 
-function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
+function MainComponent({
+  onLogin,
+  isAuthenticated,
+  setIsAuthenticated,
+  userInfo: initialUserInfo,
+}) {
   const navigate = useNavigate();
+  // ブログページ内でのメニューを使用した画面遷移はメニューが開きっぱなしになる問題に対処するメソッド
+  // ヘッダーメニューからの遷移はこのメソッドに統一するかも？
+  const navigatePage = (path) => {
+    setIsMenuOpen(false);
+    navigate(path);
+  };
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -16,13 +29,62 @@ function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
+  const [userInfo, setUserInfo] = useState(initialUserInfo); // userInfoの状態管理
+  // API からユーザ情報を取得する処理を追加
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetchWithAuth(
+          `${config.apiBaseUrl}/api/user/me`,
+          {
+            method: "GET",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setUserInfo(data); // 取得したユーザ情報をstateにセット
+        } else {
+          console.error("ユーザ情報の取得に失敗しました");
+        }
+      } catch (error) {
+        console.error("API呼び出しに失敗しました:", error);
+      }
+    };
+
+    // userInfo が未指定かつ認証済みの場合にAPIを呼び出す
+    if (!initialUserInfo && isAuthenticated) {
+      fetchUserInfo();
+    }
+  }, [initialUserInfo, isAuthenticated]);
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: "新しいコメントがあります", isRead: false },
-    { id: 2, message: "フォロワーが増えました", isRead: false },
-    { id: 3, message: "あなたのブログが「いいね！」されました", isRead: false },
-  ]);
+  // TODO通知データとユーザデータ（画像など）はヘッダー描画時にAPIで取りに行く動きにする必要がある。
+  const [notifications, setNotifications] = useState([]);
+  // 通知データの取得
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetchWithAuth(
+          `${config.apiBaseUrl}/api/notification/unread`,
+          {
+            method: "GET",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data); // 取得した通知データをstateにセット
+        } else {
+          console.error("通知データの取得に失敗しました");
+        }
+      } catch (error) {
+        console.error("API呼び出しに失敗しました:", error);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.isRead
@@ -39,6 +101,17 @@ function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
       isRead: true,
     }));
     setNotifications(updatedNotifications);
+    // 全部既読APIを呼び出す
+    try {
+      const response = fetchWithAuth(
+        `${config.apiBaseUrl}/api/notification/mark-all-read`,
+        {
+          method: "POST",
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleLogout = () => {
@@ -95,23 +168,40 @@ function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
                 isNotificationOpen={isNotificationOpen}
                 setIsNotificationOpen={setIsNotificationOpen}
                 markAllAsRead={markAllAsRead}
+                unreadCount={unreadCount}
               />
             </div>
           )}
           {/* ユーザアイコンの表示 (認証済みの場合のみ) */}
           {isAuthenticated && (
-            <button
-              className="px-2 py-1 rounded-3xl bg-green-300"
-              onClick={() => navigate("/sample")}
-            >
-              <i className="fas fa-user text-white cursor-pointer"></i>
-            </button>
+            <>
+              {userInfo && userInfo.profileImageUrl ? (
+                <button
+                  className="px-2 py-1 w-13 h-13 rounded-full"
+                  onClick={() => navigate("/user/profile")}
+                >
+                  {/* 動的な画像の呼び出し方はAPIを呼ぶ方針とします。 */}
+                  <img
+                    src={`${config.apiBaseUrl}/api/public/files/${userInfo.profileImageUrl}`}
+                    alt="Profile Image"
+                    className="w-9 h-9 rounded-full"
+                  />
+                </button>
+              ) : (
+                <button
+                  className="px-2 py-1 w-13 h-13 rouded-full bg-white"
+                  onClick={() => navigate("/user/profile")}
+                >
+                  <i className="fas fa-user text-black cursor-pointer"></i>
+                </button>
+              )}
+            </>
           )}
 
           <button
             onClick={toggleMenu}
             type="button"
-            className={isMenuOpen ? "z-10 space-y-2 pb-6" : "z-10 space-y-2"}
+            className={isMenuOpen ? "z-20 space-y-2 pb-6" : "z-20 space-y-2"}
           >
             <div
               className={
@@ -141,7 +231,7 @@ function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
         <nav
           className={
             isMenuOpen
-              ? "text-left fixed bg-slate-50 right-0 top-0 w-5/12 h-screen flex flex-col justify-start ease-linear duration-300"
+              ? "z-10 text-left fixed right-0 top-0 w-5/12 h-screen flex flex-col justify-start ease-linear duration-300 bg-green-50"
               : "fixed right-[-100%] ease-linear duration-300"
           }
         >
@@ -163,10 +253,11 @@ function MainComponent({ onLogin, isAuthenticated, setIsAuthenticated }) {
               </span>
             </li>
             {isModalOpen && (
-              <ul className="pl-4 bg-gray-100">
+              <ul className="pl-4 bg-gray-50">
                 <li
                   className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-                  onClick={() => navigate("/blog/category1")}
+                  onClick={() => navigatePage("/blog/create")}
+                  // onClick={() => navigate("/blog/edit", { replace: true })}
                 >
                   <span className="py-2 inline-block">ブログを書く</span>
                   <span className="text-blue-500 ml-auto mr-2 text-lg">

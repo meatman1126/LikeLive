@@ -60,13 +60,14 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
               })
               .then((data) => {
                 console.log("ログインユーザ情報:", data);
+                localStorage.setItem("ll_userId", data.id);
                 // 必要に応じてユーザ情報を保存したり、状態を更新する処理
                 if (data.updatedBy !== "System") {
                   isFirstLogin = false;
                 }
                 // 認証成功後、ダッシュボード画面に遷移
                 navigate("/dashboard", {
-                  state: { isFirstLogin: isFirstLogin },
+                  state: { isFirstLogin: isFirstLogin, userInfo: data },
                 });
               })
               .catch((userError) => {
@@ -78,6 +79,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
                 localStorage.removeItem("ll_accessToken");
                 localStorage.removeItem("ll_refreshToken");
                 localStorage.removeItem("ll_tokenExpires");
+                localStorage.removeItem("ll_userId");
 
                 setIsAuthenticated(false);
                 navigate("/");
@@ -113,7 +115,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
           <div className="error-message text-red">{errorMessage}</div>
         )}
         {/* ヘッダー */}
-        <div className="fixed top-0 left-0 w-full z-10">
+        <div className="top-0 left-0 w-full z-10">
           <Header
             onLogin={login}
             isAuthenticated={isAuthenticated}

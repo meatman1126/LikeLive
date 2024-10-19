@@ -59,6 +59,6 @@ public class Comment extends BaseEntity {
      * 削除フラグ
      */
     @Column(nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
 }

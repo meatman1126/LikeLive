@@ -1,12 +1,17 @@
 package com.example.bookstore.dto.form.blog;
 
+import com.example.bookstore.entity.Setlist;
 import com.example.bookstore.entity.code.BlogCategory;
 import com.example.bookstore.entity.code.BlogStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * ブログ情報アップデートForm
+ */
 @Data
 @Builder
 public class BlogUpdateForm {
@@ -24,7 +29,7 @@ public class BlogUpdateForm {
     /**
      * 記事のコンテンツ (リッチテキスト / HTML)
      */
-    private String content;
+    private Map<String, Object> content;
 
     /**
      * 記事のステータス (下書き、公開済み、アーカイブ)
@@ -54,5 +59,11 @@ public class BlogUpdateForm {
     /**
      * セットリスト
      */
-    private LinkedHashMap<String, String> setlist;
+    private Setlist setlist;
+
+    /**
+     * アーティストIDリスト
+     */
+    private List<String> artistIdList;
+
 }

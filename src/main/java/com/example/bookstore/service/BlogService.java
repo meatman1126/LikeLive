@@ -1,12 +1,19 @@
 package com.example.bookstore.service;
 
+import com.example.bookstore.dto.repository.DashboardRepositoryDto;
+import com.example.bookstore.dto.view.BlogInfoViewDto;
+import com.example.bookstore.dto.view.DashboardViewDto;
+import com.example.bookstore.entity.Artist;
 import com.example.bookstore.entity.Blog;
 import com.example.bookstore.entity.Notification;
 import com.example.bookstore.entity.User;
+import com.example.bookstore.entity.code.BlogStatus;
 import com.example.bookstore.entity.code.NotificationType;
 import com.example.bookstore.repository.jpa.BlogRepository;
 import com.example.bookstore.service.util.UserUtilService;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,20 +21,47 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * ブログサービス
+ */
 @Service
 public class BlogService {
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * ブログリポジトリ
+     */
     @Autowired
     private BlogRepository blogRepository;
 
+    /**
+     * 通知サービス
+     */
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * フォローサービス
+     */
     @Autowired
     private FollowService followService;
+
+    /**
+     * ブログアーティストサービス
+     */
+    @Autowired
+    private BlogArtistService blogArtistService;
+
+    /**
+     * エンティティマネージャ
+     */
+    @Autowired
+    private EntityManager entityManager;
 
 
     //ローカル開発の段階でElasticsearchを導入するのが難しいため一旦保留する
@@ -48,6 +82,7 @@ public class BlogService {
         return blogRepository.searchBlogsByKeyword(keyword);
     }
 
+
     /**
      * 指定されたブログ情報を取得します。
      *
@@ -59,20 +94,48 @@ public class BlogService {
     }
 
     /**
+     * 指定されたブログ情報を取得します。
+     *
+     * @param blogId ブログID
+     * @return ブログ情報
+     */
+    public BlogInfoViewDto findBlogInfo(Long blogId) {
+        Blog blog = blogRepository.findById(blogId).orElseThrow();
+        List<Artist> artistList = blogArtistService.findArtistsByBlogId(blogId);
+
+        return BlogInfoViewDto.builder()
+                .blog(blog)
+                .artistList(artistList)
+                .build();
+    }
+
+    public List<DashboardViewDto> findInterestBlogs(Long userId) {
+        List<DashboardRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId, PageRequest.of(0, 10));
+        return DashboardViewDto.toViewDto(repositoryDtoList);
+    }
+
+    /**
      * ブログ情報を登録します。
      *
      * @param input 登録するブログ情報
      * @return 登録されたブログ情報
      */
     @Transactional
-    public Blog createBlog(Blog input) {
+    public Blog createBlog(Blog input, List<String> artistIdList) {
         // DBへの登録
+        // ブログデータの登録
         Blog createdBlog = blogRepository.save(input);
+        // ブログアーティスト関連データの登録
+        blogArtistService.saveBlogArtist(input, artistIdList);
+
+
         //Elasticsearchのインデックスを登録
 //        blogSearchRepository.save(createdBlog);
 
-        // ブログの作成通知を作成
-        saveNotificationOfBlogCreated(createdBlog);
+        // ブログの作成通知を作成(下書きの場合は通知は作成しない)
+        if (input.getStatus().equals(BlogStatus.PUBLISHED)) {
+            saveNotificationOfBlogCreated(createdBlog);
+        }
         return createdBlog;
     }
 
@@ -82,13 +145,32 @@ public class BlogService {
      *
      * @param input 更新情報
      */
-    public Blog updatedBlog(Blog input) {
+    @Transactional
+    public Blog updatedBlog(Blog input, List<String> artistIdList) {
+        boolean isCreateNotification = false;
+        Blog beforeUpdateBlog = blogRepository.findById(input.getId()).orElseThrow();
+        if (beforeUpdateBlog.getStatus().equals(BlogStatus.DRAFT) && input.getStatus().equals(BlogStatus.PUBLISHED)) {
+            isCreateNotification = true;
+        }
+
         //DBを更新
         blogRepository.update(input);
+
+        // 関連アーティスト情報を保存
+        blogArtistService.saveBlogArtist(input, artistIdList);
+
         Blog updatedBlog = blogRepository.findById(input.getId()).orElseThrow();
+
 
         //Elasticsearchのインデックスを更新
 //        blogSearchRepository.save(updatedBlog);
+
+        entityManager.flush();
+        entityManager.refresh(updatedBlog);
+
+        if (isCreateNotification) {
+            saveNotificationOfBlogCreated(updatedBlog);
+        }
 
         return updatedBlog;
     }
@@ -100,7 +182,7 @@ public class BlogService {
      * @param isCansel いいね取り消しフラグ
      * @return 更新後のいいね数
      */
-    public int updatedLikeCount(Long blogId, boolean isCansel) {
+    public int updatedLikeCount(Long blogId, Boolean isCansel) {
         Blog blog = blogRepository.findById(blogId).orElseThrow();
         int updatedLikeCount;
         if (isCansel) {
@@ -130,7 +212,7 @@ public class BlogService {
      * @param isCansel コメント取り消しフラグ
      * @return 更新後のコメント数
      */
-    public int updatedCommentCount(Long blogId, boolean isCansel) {
+    public int updatedCommentCount(Long blogId, Boolean isCansel) {
         Blog blog = blogRepository.findById(blogId).orElseThrow();
         int updatedCommentCount;
         if (isCansel) {
@@ -166,7 +248,7 @@ public class BlogService {
         User triggerUser = userUtilService.getCurrentUser();
 
         // ログインユーザのフォロワーを取得する
-        List<User> followedList = followService.getFollowedUsers();
+        List<User> followedList = followService.getFollowers();
         // 各フォロワーに対して通知データを作成する。
         for (User user : followedList) {
             Notification notification = Notification.builder()
