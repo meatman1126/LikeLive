@@ -152,7 +152,7 @@ public class BlogService {
     }
 
     public List<DashboardBlogViewDto> findInterestBlogs(Long userId) {
-        List<DashboardBlogRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId, PageRequest.of(0, 10));
+        List<DashboardBlogRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId, BlogStatus.PUBLISHED, PageRequest.of(0, 10));
         return DashboardBlogViewDto.toViewDto(repositoryDtoList);
     }
 

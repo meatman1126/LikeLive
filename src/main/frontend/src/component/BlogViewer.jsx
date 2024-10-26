@@ -237,7 +237,10 @@ export default function BlogViewer({ targetBlogId, showComments }) {
             {/* 著者情報、ブログ公開日時、いいねカウント */}
             <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-center mt-4 pl-4 sm:pl-0">
               {/* 著者情報 */}
-              <div className="flex items-center mb-2 sm:mb-0 sm:mr-8 text-left">
+              <div
+                className="flex items-center mb-2 sm:mb-0 sm:mr-8 text-left cursor-pointer"
+                onClick={() => navigate(`/user/${blogInfo.author.id}`)}
+              >
                 <img
                   src={`${config.apiBaseUrl}/api/public/files/${blogInfo.author.profileImageUrl}`}
                   alt="プロフィール画像"
@@ -387,17 +390,19 @@ export default function BlogViewer({ targetBlogId, showComments }) {
               )}
             </div>
           )}{" "}
-          <div id="comment-section">
-            {initialComments ? (
-              <CommentList
-                initialComments={initialComments}
-                targetBlogId={targetBlogId}
-                showComments={showComments}
-              />
-            ) : (
-              <p>Loading comments...</p>
-            )}
-          </div>
+          {blogInfo.status === "PUBLISHED" && (
+            <div id="comment-section">
+              {initialComments ? (
+                <CommentList
+                  initialComments={initialComments}
+                  targetBlogId={targetBlogId}
+                  showComments={showComments}
+                />
+              ) : (
+                <p>Loading comments...</p>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

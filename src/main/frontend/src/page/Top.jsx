@@ -5,8 +5,10 @@ import "../App.css";
 import Fotter from "../component/Fotter";
 import Header from "../component/Header";
 import config from "../config/properties";
-import blog from "../images/blog.png";
-import follow from "../images/follow.png";
+import blogLarge from "../images/blog_large.jpeg";
+import blogSmall from "../images/blog_small.jpeg";
+import followLarge from "../images/follow_large.jpeg";
+import followSmall from "../images/follow_small.jpeg";
 import friend from "../images/friend.png";
 import top from "../images/top.png";
 import fetchWithAuth from "../util/fetchUtil";
@@ -143,14 +145,16 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
           </div>
 
           {/* 中央下部に配置されたボタン要素 */}
-          <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2">
-            <button
-              className="px-6 py-3 bg-teal-500 text-white rounded-full shadow-lg hover:bg-teal-600"
-              onClick={() => login()}
-            >
-              Google連携で始める
-            </button>
-          </div>
+          {!isAuthenticated && (
+            <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2">
+              <button
+                className="px-6 py-3 bg-teal-500 text-white rounded-full shadow-lg hover:bg-teal-600"
+                onClick={() => login()}
+              >
+                Google連携で始める
+              </button>
+            </div>
+          )}
         </section>
 
         {/* ブログセクション */}
@@ -160,11 +164,19 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
           </h2>
           {/* 画像を中央寄せ、左右に10%の余白、下に5%の余白 */}
           <div>
-            <img
-              src={blog}
-              alt="ブログのイメージ"
-              className="h-auto mx-auto w-4/5 mb-8"
-            />
+            <picture>
+              {/* スマートフォン用画像 */}
+              <source media="(max-width: 768px)" srcSet={blogSmall} />
+              {/* デスクトップ用画像 */}
+              <source media="(min-width: 769px)" srcSet={blogLarge} />
+
+              {/* デフォルト画像（<img>タグのsrc属性） */}
+              <img
+                src={blogSmall}
+                alt="ブログのイメージ"
+                className="h-auto mx-auto w-4/5 mb-8"
+              />
+            </picture>
           </div>
         </section>
         {/* フォローセクション */}
@@ -173,11 +185,19 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
             フォロー
           </h2>
           <div>
-            <img
-              src={follow}
-              alt="フォローのイメージ"
-              className="h-auto mx-auto w-4/5 mb-8"
-            />
+            <picture>
+              {/* スマートフォン用画像 */}
+              <source media="(max-width: 768px)" srcSet={followSmall} />
+              {/* デスクトップ用画像 */}
+              <source media="(min-width: 769px)" srcSet={followLarge} />
+
+              {/* デフォルト画像（<img>タグのsrc属性） */}
+              <img
+                src={followSmall}
+                alt="フォローのイメージ"
+                className="h-auto mx-auto w-4/5 mb-8"
+              />
+            </picture>
           </div>
         </section>
 

@@ -4,6 +4,7 @@ import config from "../config/properties";
 import { getCroppedImg } from "../util/cropImageToCanvas";
 import fetchWithAuth from "../util/fetchUtil";
 import { useLoading } from "../util/LoadingContext";
+import { handleSuccessToast } from "../util/toastUtil";
 
 /**
  *
@@ -208,6 +209,7 @@ export default function UserRegistrationModal({
         console.log("ユーザ情報が更新されました:", updatedUser);
         onClose();
         setUserInfo(updatedUser);
+        handleSuccessToast("ユーザ情報が登録されました");
       } else {
         console.error("ユーザ情報の更新に失敗しました");
       }

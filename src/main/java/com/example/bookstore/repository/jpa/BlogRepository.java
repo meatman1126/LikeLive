@@ -2,6 +2,7 @@ package com.example.bookstore.repository.jpa;
 
 import com.example.bookstore.dto.repository.DashboardBlogRepositoryDto;
 import com.example.bookstore.entity.Blog;
+import com.example.bookstore.entity.code.BlogStatus;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,7 +58,7 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
             "ORDER BY b.blogCreatedTime DESC")
     List<Blog> findDraftBlogsByUserId(@Param("userId") Long userId);
 
-    
+
     /**
      * キーワードに合致するブログ記事をページネーションとソートを用いて取得します。
      * ブログに関連するアーティスト名も検索対象に含め、ステータスがPUBLISHEDのもののみ取得します。
@@ -187,15 +188,28 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
      * @param pageable ページネーション情報
      * @return ダッシュボード表示用のブログ記事リスト
      */
+//    @Query("SELECT new com.example.bookstore.dto.repository.DashboardBlogRepositoryDto(" +
+//            "b.id, b.title,b.thumbnailUrl, b.author.profileImageUrl, b.author.displayName, " +
+//            "CASE WHEN (SELECT COUNT(f) FROM Follow f WHERE f.follower.id = :userId AND f.followed.id = b.author.id) > 0 THEN true ELSE false END, " +
+//            "b.blogCreatedTime) " +
+//            "FROM Blog b WHERE b.author.id <> :userId " +
+//            "ORDER BY CASE WHEN b.author.id IN " +
+//            "(SELECT f.followed.id FROM Follow f WHERE f.follower.id = :userId) THEN 0 ELSE 1 END ASC, " +
+//            "b.blogCreatedTime DESC")
+//    List<DashboardBlogRepositoryDto> findInterestBlogs(Long userId, Pageable pageable);
     @Query("SELECT new com.example.bookstore.dto.repository.DashboardBlogRepositoryDto(" +
-            "b.id, b.title,b.thumbnailUrl, b.author.profileImageUrl, b.author.displayName, " +
+            "b.id, b.title, b.thumbnailUrl, b.author.profileImageUrl, b.author.displayName, " +
             "CASE WHEN (SELECT COUNT(f) FROM Follow f WHERE f.follower.id = :userId AND f.followed.id = b.author.id) > 0 THEN true ELSE false END, " +
             "b.blogCreatedTime) " +
-            "FROM Blog b WHERE b.author.id <> :userId " +
+            "FROM Blog b " +
+            "WHERE b.author.id <> :userId " +
+            "AND b.status = :publishedStatus " +  // 公開済み状態のみ取得
             "ORDER BY CASE WHEN b.author.id IN " +
             "(SELECT f.followed.id FROM Follow f WHERE f.follower.id = :userId) THEN 0 ELSE 1 END ASC, " +
             "b.blogCreatedTime DESC")
-    List<DashboardBlogRepositoryDto> findInterestBlogs(Long userId, Pageable pageable);
+    List<DashboardBlogRepositoryDto> findInterestBlogs(@Param("userId") Long userId,
+                                                       @Param("publishedStatus") BlogStatus publishedStatus,
+                                                       Pageable pageable);
 
 
 }
