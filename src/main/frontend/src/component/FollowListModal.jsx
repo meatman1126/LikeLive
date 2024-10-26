@@ -148,12 +148,12 @@ export default function FollowListModal({
                 {userInfo.isFollowing ? (
                   <>
                     {isOthersInfo ? (
-                      <button className="cursor-default pointer-events-none bg-green-500 rounded p-1 px-2 text-xs">
+                      <button className="cursor-default pointer-events-none bg-white text-black border border-gray-300 rounded-full p-1 px-2 text-xs">
                         フォロー中
                       </button>
                     ) : (
                       <button
-                        className="bg-green-500 rounded p-1 px-2 text-xs"
+                        className="bg-white text-black border border-gray-300 rounded-full p-1 px-2 text-xs"
                         onClick={() => clearFollow(userInfo)}
                       >
                         フォロー中
@@ -163,12 +163,12 @@ export default function FollowListModal({
                 ) : (
                   <>
                     {isOthersInfo ? (
-                      <button className="cursor-default pointer-events-none bg-gray-500 rounded p-1 px-2 text-xs">
+                      <button className="cursor-default pointer-events-none bg-blue-500 text-white rounded-full p-1 px-2 text-xs">
                         フォローする
                       </button>
                     ) : (
                       <button
-                        className="bg-gray-500 rounded p-1 px-2 text-xs"
+                        className="bg-blue-500 text-white rounded-full p-1 px-2 text-xs"
                         onClick={() => follow(userInfo)}
                       >
                         フォローする

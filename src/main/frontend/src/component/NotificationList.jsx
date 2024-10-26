@@ -1,6 +1,9 @@
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import config from "../config/properties";
+import fetchWithAuth from "../util/fetchUtil";
 
 function NotificationList({
   notifications,
@@ -9,6 +12,8 @@ function NotificationList({
   markAllAsRead,
   unreadCount,
 }) {
+  const navigate = useNavigate();
+
   // メッセージ生成用の関数
   const generateNotificationMessage = (notification) => {
     let message = "";
@@ -30,6 +35,52 @@ function NotificationList({
     }
 
     return message;
+  };
+
+  const handleNotification = async (notification) => {
+    try {
+      // 通知を既読としてマークするAPIを呼び出す
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/notification/mark-read`,
+        {
+          method: "POST",
+          body: JSON.stringify([notification.id]), // 通知IDを配列で送信
+        }
+      );
+
+      if (!response.ok) {
+        console.error("通知の既読処理に失敗しました");
+        return;
+      }
+
+      // notificationType に基づいて遷移する画面を判定
+      switch (notification.notificationType) {
+        case "BLOG_CREATED":
+          // 新しいブログ投稿の場合、ブログの詳細ページへ遷移
+          navigate(`/blog/${notification.relatedBlog.id}`);
+          break;
+
+        case "FOLLOW":
+          // フォロー通知の場合、フォローユーザーのプロフィールページへ遷移
+          navigate(`/user/${notification.triggerUser.id}`);
+          break;
+
+        case "COMMENT":
+          // コメントへの返信通知の場合、該当するコメント付きブログページへ遷移
+          navigate(`/blog/${notification.relatedBlog.id}`, {
+            state: { showComments: true },
+          });
+          break;
+
+        default:
+          console.warn(
+            "未対応の通知タイプです:",
+            notification.notificationType
+          );
+      }
+    } catch (error) {
+      console.error("通知処理でエラーが発生しました:", error);
+    }
   };
   return (
     <>
@@ -68,6 +119,7 @@ function NotificationList({
                   className={`py-2 px-4 cursor-pointer border-black border ${
                     notification.isRead ? "bg-gray-300" : "font-bold text-black"
                   } hover:bg-gray-100`}
+                  onClick={() => handleNotification(notification)}
                 >
                   {generateNotificationMessage(notification)}
                 </li>

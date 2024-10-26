@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import BlogEditor from "../component/BlogEditor";
 import BlogViewer from "../component/BlogViewer";
 import Header from "../component/Header";
@@ -13,6 +13,9 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
   const [isEditMode, setIsEditMode] = useState(isEdit);
   // 編集または閲覧対象のブログID
   const { targetBlogId } = useParams();
+
+  const location = useLocation();
+  const showComments = location.state?.showComments || false;
 
   // isEditが変更されるたびに、isEditModeを更新
   useEffect(() => {
@@ -39,7 +42,7 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
       ) : (
         // 編集モードではない場合は閲覧
         <div className="p-12">
-          <BlogViewer targetBlogId={targetBlogId} />
+          <BlogViewer targetBlogId={targetBlogId} showComments={showComments} />
         </div>
       )}
     </>

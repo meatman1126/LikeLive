@@ -55,9 +55,14 @@ public class ProfileViewDto {
     private Long followerCount;
 
     /**
-     * RepostitoryDtoからViewDtoに変換
+     * フォロー有無（取得対象のプロフィールが他ユーザの場合のみ指定、ログインユーザ自身の情報を取得する際はnull）
      */
-    public static ProfileViewDto build(User userInfo, List<Artist> favoriteArtistList, List<Blog> createdBLogList, Long followedCount, Long followerCount) {
+    private Boolean isFollow;
+
+    /**
+     * RepositoryDtoからViewDtoに変換
+     */
+    public static ProfileViewDto build(User userInfo, List<Artist> favoriteArtistList, List<Blog> createdBLogList, Long followedCount, Long followerCount, Boolean isFollow) {
         return ProfileViewDto.builder()
                 .userId(userInfo.getId())
                 .displayName(userInfo.getDisplayName())
@@ -67,6 +72,7 @@ public class ProfileViewDto {
                 .createdBlogList(createdBLogList)
                 .followedCount(followedCount)
                 .followerCount(followerCount)
+                .isFollow(isFollow)
                 .build();
     }
 

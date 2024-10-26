@@ -139,12 +139,7 @@ function MainComponent({
 
         <div className="flex space-x-7 items-center">
           {/* 未認証の場合ログインボタンを表示 */}
-          {!isAuthenticated && (
-            <LoginButton
-              onLogin={onLogin}
-              setIsAuthenticated={setIsAuthenticated}
-            />
-          )}
+          {!isAuthenticated && <LoginButton onLogin={onLogin} />}
 
           {/* 通知アイコン (認証済みの場合のみ) */}
           {isAuthenticated && (
@@ -197,34 +192,35 @@ function MainComponent({
               )}
             </>
           )}
-
-          <button
-            onClick={toggleMenu}
-            type="button"
-            className={isMenuOpen ? "z-20 space-y-2 pb-6" : "z-20 space-y-2"}
-          >
-            <div
-              className={
-                isMenuOpen
-                  ? "w-8 h-0.5 bg-gray-600 translate-y-2.5 rotate-45 transition duration-500 ease-in-out"
-                  : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
-              }
-            />
-            <div
-              className={
-                isMenuOpen
-                  ? "opacity-0 transition duration-500 ease-in-out"
-                  : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
-              }
-            />
-            <div
-              className={
-                isMenuOpen
-                  ? "w-8 h-0.5 bg-gray-600 -rotate-45 transition duration-500 ease-in-out"
-                  : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
-              }
-            />
-          </button>
+          {isAuthenticated && (
+            <button
+              onClick={toggleMenu}
+              type="button"
+              className={isMenuOpen ? "z-20 space-y-2 pb-6" : "z-20 space-y-2"}
+            >
+              <div
+                className={
+                  isMenuOpen
+                    ? "w-8 h-0.5 bg-gray-600 translate-y-2.5 rotate-45 transition duration-500 ease-in-out"
+                    : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
+                }
+              />
+              <div
+                className={
+                  isMenuOpen
+                    ? "opacity-0 transition duration-500 ease-in-out"
+                    : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
+                }
+              />
+              <div
+                className={
+                  isMenuOpen
+                    ? "w-8 h-0.5 bg-gray-600 -rotate-45 transition duration-500 ease-in-out"
+                    : "w-8 h-0.5 bg-gray-300 transition duration-500 ease-in-out"
+                }
+              />
+            </button>
+          )}
         </div>
 
         {/* nav */}
@@ -238,7 +234,7 @@ function MainComponent({
           <ul className="mt-12 text-black">
             <li
               className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigatePage("/dashboard")}
             >
               <span className="py-2 inline-block">ダッシュボード</span>
               <span className="text-blue-500 ml-auto mr-2 text-lg">{">"}</span>
@@ -257,7 +253,6 @@ function MainComponent({
                 <li
                   className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
                   onClick={() => navigatePage("/blog/create")}
-                  // onClick={() => navigate("/blog/edit", { replace: true })}
                 >
                   <span className="py-2 inline-block">ブログを書く</span>
                   <span className="text-blue-500 ml-auto mr-2 text-lg">
@@ -266,14 +261,14 @@ function MainComponent({
                 </li>
                 <li
                   className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-                  onClick={() => navigate("/blog/category2")}
+                  onClick={() => navigatePage("/blog/search")}
                 >
                   <span className="py-2 inline-block">ブログを検索する</span>
                   <span className="text-blue-500 ml-auto mr-2 text-lg">
                     {">"}
                   </span>
                 </li>
-                <li
+                {/* <li
                   className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
                   onClick={() => navigate("/blog/category3")}
                 >
@@ -281,23 +276,23 @@ function MainComponent({
                   <span className="text-blue-500 ml-auto mr-2 text-lg">
                     {">"}
                   </span>
-                </li>
+                </li> */}
               </ul>
             )}
             <li
               className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-              onClick={() => navigate("/user")}
+              onClick={() => navigatePage("/user/profile")}
             >
-              <span className="py-2 inline-block">ユーザ</span>
+              <span className="py-2 inline-block">ユーザ管理</span>
               <span className="text-blue-500 ml-auto mr-2 text-lg">{">"}</span>
             </li>
-            <li
+            {/* <li
               className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
               onClick={() => navigate("/setting")}
             >
               <span className="py-2 inline-block">SETTING</span>
               <span className="text-blue-500 ml-auto mr-2 text-lg">{">"}</span>
-            </li>
+            </li> */}
             {isAuthenticated && (
               <li
                 className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"

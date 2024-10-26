@@ -118,18 +118,25 @@ public class UserService {
     /**
      * ユーザのプロフィール、アーティスト、ブログ情報を取得します
      *
-     * @param userId ユーザID
+     * @param userId       ユーザID
+     * @param isOthersInfo 他ユーザの情報を取得する場合true
      * @return ProfileRepositoryDto ユーザのプロフィール情報
      */
-    public ProfileViewDto getUserProfile(Long userId) {
+    public ProfileViewDto getUserProfile(Long userId, Boolean isOthersInfo) {
         User userInfo = userRepository.findById(userId).orElseThrow();
         List<Artist> favoriteArtistList = userArtistRepository.findFavoriteArtistsByUserId(userInfo.getId());
-        List<Blog> createdBlogList = blogRepository.findBlogsByUserId(userInfo.getId());
+        List<Blog> createdBlogList = blogRepository.findPublishedBlogsByUserId(userInfo.getId());
         // 指定ユーザがフォロー中のユーザ数をカウント
         Long followedCount = followRepository.countFollowedUsers(userInfo.getId());
         // 指定ユーザのフォロワーのユーザ数をカウント
         Long followerCount = followRepository.countFollowers(userInfo.getId());
-        return ProfileViewDto.build(userInfo, favoriteArtistList, createdBlogList, followedCount, followerCount);
+        // 指定ユーザのフォロー状況を取得（ログインユーザ自身の情報を取得する場合はnull）
+        Boolean isFollow = null;
+        if (isOthersInfo) {
+            // ログインユーザの対象ユーザフォロー有無を取得
+            isFollow = followRepository.isFollowing(userUtilService.getCurrentUser().getId(), userId);
+        }
+        return ProfileViewDto.build(userInfo, favoriteArtistList, createdBlogList, followedCount, followerCount, isFollow);
     }
 
     /**

@@ -1,42 +1,4 @@
-// "use client";
-// import "@fortawesome/fontawesome-free/css/all.min.css";
-// import React from "react";
-
-// function HumbergerMenu() {
-//   const [isOpen, setIsOpen] = React.useState(false);
-
-//   const toggleMenu = () => {
-//     setIsOpen(!isOpen);
-//   };
-
-//   return (
-//     <div className="relative">
-//       <button
-//         className="flex items-center w-10 px-3 py-3 border rounded text-black bg-white"
-//         onClick={toggleMenu}
-//       >
-//         <i className="fas fa-bars"></i>
-//       </button>
-//       <div
-//         className={`absolute top-full mt-2 w-40 bg-white text-black rounded transition-transform duration-300 ${
-//           isOpen
-//             ? "transform translate-y-0 opacity-100"
-//             : "transform -translate-y-10 opacity-0"
-//         }`}
-//         style={{ display: isOpen ? "block" : "none" }}
-//       >
-//         <ul className="flex flex-col">
-//           <li className="px-4 py-2 hover:bg-gray-700">Menu Item 1</li>
-//           <li className="px-4 py-2 hover:bg-gray-700">Menu Item 2</li>
-//           <li className="px-4 py-2 hover:bg-gray-700">Menu Item 3</li>
-//         </ul>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default HumbergerMenu;
-
+// このコンポーネントは不要です。
 "use client";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import React from "react";

@@ -1,6 +1,6 @@
 package com.example.bookstore.dto.view;
 
-import com.example.bookstore.dto.repository.DashboardRepositoryDto;
+import com.example.bookstore.dto.repository.DashboardBlogRepositoryDto;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,21 +8,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ダッシュボード用ブログViewDto
+ */
 @Data
 @Builder
-public class DashboardViewDto {
+public class DashboardBlogViewDto {
 
     private Long id;
     private String blogTitle;
+    /**
+     * サムネイル画像
+     */
+    private String thumbnailUrl;
     private String profileImageUrl;
     private String authorName;
     private Boolean isFollowAuthor;
     private String blogCreatedTime;
 
-    private static DashboardViewDto build(DashboardRepositoryDto repositoryDto) {
-        return DashboardViewDto.builder()
+    private static DashboardBlogViewDto build(DashboardBlogRepositoryDto repositoryDto) {
+        return DashboardBlogViewDto.builder()
                 .id(repositoryDto.getId())
                 .blogTitle(repositoryDto.getBlogTitle())
+                .thumbnailUrl(repositoryDto.getThumbnailUrl())
                 .profileImageUrl(repositoryDto.getProfileImageUrl())
                 .authorName(repositoryDto.getAuthorName())
                 .isFollowAuthor(repositoryDto.getIsFollowAuthor())
@@ -30,10 +38,10 @@ public class DashboardViewDto {
                 .build();
     }
 
-    public static List<DashboardViewDto> toViewDto(List<DashboardRepositoryDto> repositoryDtoList) {
-        List<DashboardViewDto> dashboardViewDtoList = new ArrayList<>();
-        for (DashboardRepositoryDto repositoryDto : repositoryDtoList) {
-            dashboardViewDtoList.add(DashboardViewDto.build(repositoryDto));
+    public static List<DashboardBlogViewDto> toViewDto(List<DashboardBlogRepositoryDto> repositoryDtoList) {
+        List<DashboardBlogViewDto> dashboardViewDtoList = new ArrayList<>();
+        for (DashboardBlogRepositoryDto repositoryDto : repositoryDtoList) {
+            dashboardViewDtoList.add(DashboardBlogViewDto.build(repositoryDto));
         }
 
         return dashboardViewDtoList;

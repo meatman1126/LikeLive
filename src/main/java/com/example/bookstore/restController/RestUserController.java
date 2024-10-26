@@ -157,7 +157,7 @@ public class RestUserController {
      */
     @GetMapping("/user/profile")
     public ResponseEntity<ProfileViewDto> getUserProfile() {
-        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId());
+        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId(), false);
         return ResponseEntity.ok(profile);
     }
 
@@ -169,7 +169,8 @@ public class RestUserController {
      */
     @GetMapping("/user/profile/{targetUserId}")
     public ResponseEntity<ProfileViewDto> getOthersProfile(@PathVariable Long targetUserId) {
-        ProfileViewDto profile = userService.getUserProfile(targetUserId);
+        boolean isOthersInfo = !targetUserId.equals(userUtilService.getCurrentUser().getId());
+        ProfileViewDto profile = userService.getUserProfile(targetUserId, isOthersInfo);
         return ResponseEntity.ok(profile);
     }
 
@@ -186,7 +187,7 @@ public class RestUserController {
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
 
         User updatedUser = userService.updateUserProfile(form, profileImage);
-        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId());
+        ProfileViewDto profile = userService.getUserProfile(userUtilService.getCurrentUser().getId(), false);
 
         return ResponseEntity.ok(profile);
     }

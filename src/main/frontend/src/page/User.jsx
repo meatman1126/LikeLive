@@ -2,13 +2,15 @@
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import FollowListModal from "../component/FollowListModal";
 import Header from "../component/Header";
 import config from "../config/properties";
+import noImage from "../images/no_image.jpeg";
 import { getCroppedImg } from "../util/cropImageToCanvas";
 import fetchWithAuth from "../util/fetchUtil";
 import { useLoading } from "../util/LoadingContext";
+import { handleSuccessToast } from "../util/toastUtil";
 
 /**
  *
@@ -21,11 +23,19 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   // 表示対象のプロフィールを指定するユーザID（自身のプロフィール画面の場合は未指定）
   const { targetUserId } = useParams();
 
+  // 他ユーザのプロフィール画面の場合true
+  const [isOthersPage, setIsOthersPage] = useState(false);
+
+  const navigate = useNavigate();
+
   // ユーザプロフィール情報を管理するstate
   const [profile, setProfile] = useState(null);
 
   // 編集前のプロフィールを管理するstate
   const [initialProfile, setInitialProfile] = useState(null);
+
+  // 下書きブログ情報を管理
+  const [drafts, setDrafts] = useState([]);
 
   // 表示されているユーザがフォロー中のユーザリストを管理するstate
   const [followUsers, setFollowUsers] = useState(null);
@@ -63,7 +73,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     try {
       // APIを呼び出してフォロワー一覧を取得
       // targetUserIdが指定されているか確認してURLを切り替え
-      const url = targetUserId
+      const url = isOthersPage
         ? `${config.apiBaseUrl}/api/follow/followers/${targetUserId}`
         : `${config.apiBaseUrl}/api/follow/followers`;
 
@@ -97,7 +107,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     try {
       // APIを呼び出してフォロワー一覧を取得
       // targetUserIdが指定されているか確認してURLを切り替え
-      const url = targetUserId
+      const url = isOthersPage
         ? `${config.apiBaseUrl}/api/follow/followed/${targetUserId}`
         : `${config.apiBaseUrl}/api/follow/followed`;
 
@@ -128,11 +138,14 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     setFollowUsers(null);
   };
 
-  // 初回レンダリング時にユーザ情報を取得TODO API呼び出し
+  // 初回レンダリング時にユーザ情報を取得
   useEffect(() => {
-    if (targetUserId) {
+    if (targetUserId && targetUserId !== localStorage.getItem("ll_userId")) {
+      setIsOthersPage(true);
+      setDrafts([]);
       fetchOthersProfile(targetUserId);
     } else {
+      setIsOthersPage(false);
       fetchUserProfile();
     }
   }, [targetUserId]);
@@ -173,11 +186,33 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       } else {
         console.error("Failed to fetch profile");
       }
+      fetchDrafts();
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
       stopLoading(); // ローディング終了
       setIsLoading(false); // ローディング状態を終了
+    }
+  };
+
+  const fetchDrafts = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/my-drafts`,
+        {
+          method: "GET",
+        }
+      );
+
+      // レスポンスのステータス確認
+      if (response.ok) {
+        const data = await response.json();
+        setDrafts(data); // APIの結果をdraftsにセット
+      } else {
+        console.error("下書きの取得に失敗しました");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
     }
   };
 
@@ -236,6 +271,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
         setProfile(updatedProfile); // プロフィールを更新
         setArtistSuggestions([]);
         setSearchArtistName("");
+        handleSuccessToast("プロフィールが保存されました");
         setIsEditing(false); // 編集モードを終了
       } else {
         console.error("プロフィールの更新に失敗しました");
@@ -357,6 +393,56 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     }));
   };
 
+  const handleFollow = async (targetUserId) => {
+    console.log(`${targetUserId}をフォローします。`);
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/follow/${targetUserId}`, // APIのエンドポイント
+        {
+          method: "POST", // POSTメソッドを使用
+        }
+      );
+
+      if (response.ok) {
+        console.log(`${targetUserId}を正常にフォローしました。`);
+        // profileのisFollowをtrueに更新
+        setProfile((prevProfile) => ({
+          ...prevProfile, // 他のプロパティを保持
+          isFollow: true, // isFollowをtrueに設定
+        }));
+      } else {
+        console.error("フォローに失敗しました。");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
+
+  const handleClearFollow = async (targetUserId) => {
+    console.log(`${targetUserId}をフォロー解除します。`);
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/follow/cancel/${targetUserId}`, // APIのエンドポイント
+        {
+          method: "POST", // POSTメソッドを使用
+        }
+      );
+
+      if (response.ok) {
+        console.log(`${targetUserId}のフォローを正常に解除しました。`);
+        // profileのisFollowをfalseに更新
+        setProfile((prevProfile) => ({
+          ...prevProfile, // 他のプロパティを保持
+          isFollow: false, // isFollowをfalseに設定
+        }));
+      } else {
+        console.error("フォロー解除に失敗しました。");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
+
   if (isLoading) {
     // ローディング中はこの部分が表示される
     return (
@@ -372,7 +458,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       <Header
         isAuthenticated={isAuthenticated}
         setIsAuthenticated={setIsAuthenticated}
-        userInfo={profile} // 取得したuserInfoをHeaderに渡す
+        // userInfo={profile} // 取得したuserInfoをHeaderに渡す
       />
 
       <div className="container mx-auto p-4 font-sans">
@@ -380,24 +466,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           <div className="flex flex-col md:flex-row md:items-start mb-6">
             {isEditing ? (
               <>
-                {/* 画像選択ボタン
-                <div onClick={triggerImageSelect} className="cursor-pointer">
-                  {croppedImage ? (
-                    <img
-                      src={croppedImage}
-                      alt="選択されたプロフィール画像"
-                      className="w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6"
-                    />
-                  ) : profile.profileImageUrl ? (
-                    <img
-                      src={`${config.apiBaseUrl}/api/public/files/${profile.profileImageUrl}`}
-                      alt="ユーザーのプロフィール画像"
-                      className="w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6"
-                    />
-                  ) : (
-                    <i className="fas fa-user fa-5x text-blue-300 w-32 h-32 rounded-full pl-3 mb-4 md:mb-0 md:mr-6"></i>
-                  )}
-                </div> */}
                 <div
                   className="relative cursor-pointer w-32 h-32 mb-4 md:mb-0 md:mr-6"
                   onClick={triggerImageSelect}
@@ -490,13 +558,15 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                   <h1 className="text-2xl font-bold">{profile.displayName}</h1>
                 )}
                 {/* 他ユーザのプロフィール表示時は編集不可 */}
-                {!targetUserId && !isEditing && (
+                {!isOthersPage && !isEditing ? (
                   <button
                     onClick={handleEdit}
                     className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
                   >
                     <i className="fa-solid fa-pen-to-square"></i>
                   </button>
+                ) : (
+                  <></>
                 )}
               </div>
               {isEditing ? (
@@ -518,7 +588,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           </div>
 
           {!isEditing && (
-            <div className="mb-6">
+            <div className="mb-4">
               <a
                 href="#"
                 className="text-blue-500 hover:underline"
@@ -535,49 +605,107 @@ function User({ isAuthenticated, setIsAuthenticated }) {
               </a>
             </div>
           )}
+          {isOthersPage && (
+            <div className="mb-6">
+              {profile.isFollow ? (
+                <button
+                  className="bg-white text-black border border-gray-300 py-2 px-4 rounded-full w-5/12 sm:w-3/12"
+                  onClick={() => handleClearFollow(profile.userId)}
+                >
+                  フォロー中
+                </button>
+              ) : (
+                <button
+                  className="bg-blue-500 text-white py-2 px-4 rounded-full w-5/12 sm:w-3/12"
+                  onClick={() => handleFollow(profile.userId)}
+                >
+                  フォローする
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="mb-6 items-center">
-            {!isEditing && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">公開記事</h2>
+            <div className="mb-6 items-center">
+              {!isEditing && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold mb-2">公開記事</h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {profile.createdBlogList.map((blog) => (
-                    <div key={blog.id} className="bg-gray-100 p-2 rounded">
-                      <a href="#" className="text-blue-500 hover:underline">
-                        {blog.title}
-                      </a>
-                    </div>
-                  ))}
+                  {/* 公開記事のグリッドレイアウト */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {profile.createdBlogList.map((blog) => (
+                      <div
+                        key={blog.id}
+                        className="bg-gray-100 p-2 rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                        onClick={() => navigate(`/blog/${blog.id}`)}
+                      >
+                        {/* サムネイル画像 */}
+                        {blog.thumbnailUrl ? (
+                          <img
+                            src={`${config.apiBaseUrl}/api/public/files/${blog.thumbnailUrl}`}
+                            alt={`${blog.title}のサムネイル`}
+                            className="w-full h-36 object-cover rounded-t-lg mb-4"
+                          />
+                        ) : (
+                          <img
+                            src={noImage} // カスタムプレースホルダー画像
+                            alt="サムネイルがありません"
+                            className="w-full h-36 object-cover rounded-t-lg mb-4"
+                          />
+                        )}
+                        <p className="font-medium">{blog.title}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {drafts.length > 0 && !isEditing && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold mb-2">下書き一覧</h2>
+
+                  {/* 下書き一覧のグリッドレイアウト */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {drafts.map((draft) => (
+                      <div
+                        key={draft.id}
+                        className="bg-gray-100 p-2 rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                        onClick={() => navigate(`/blog/edit/${draft.id}`)}
+                      >
+                        <p className="font-medium">{draft.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h2 className="text-xl font-semibold mb-2">好きなアーティスト</h2>
+
+              {/* 好きなアーティストのグリッドレイアウト */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {profile.favoriteArtistList.map((artist, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 p-2 rounded flex items-center shadow-lg"
+                  >
+                    <img
+                      src={artist.imageUrl}
+                      alt={artist.name}
+                      className="w-12 h-12 rounded-full mr-4"
+                    />
+                    <span className="flex-grow">{artist.name}</span>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => removeArtist(artist.id)}
+                        className="text-red-500 hover:text-red-700 ml-auto"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
-            <h2 className="text-xl font-semibold mb-2">好きなアーティスト</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {profile.favoriteArtistList.map((artist, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-100 p-2 rounded flex items-center"
-                >
-                  <img
-                    src={artist.imageUrl}
-                    alt={artist.name}
-                    className="w-12 h-12 rounded-full mr-4"
-                  />
-                  <span className="flex-grow">{artist.name}</span>{" "}
-                  {/* 名前を左寄せ、隙間を作る */}
-                  {/* 削除アイコン */}
-                  {isEditing && (
-                    <button
-                      type="button"
-                      onClick={() => removeArtist(artist.id)}
-                      className="text-red-500 hover:text-red-700 ml-auto" // ml-autoで右寄せ
-                    >
-                      &times; {/* × アイコン */}
-                    </button>
-                  )}
-                </div>
-              ))}
             </div>
             {isEditing && (
               <>
@@ -645,7 +773,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           usersInfo={followUsers}
           setUsersInfo={setFollowUsers}
           onClose={clearFollowUsers}
-          isOthersInfo={targetUserId ? true : false}
+          isOthersInfo={isOthersPage ? true : false}
         />
       )}
       {followers && (
@@ -654,7 +782,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           usersInfo={followers}
           setUsersInfo={setFollowers}
           onClose={clearFollowers}
-          isOthersInfo={targetUserId ? true : false}
+          isOthersInfo={isOthersPage ? true : false}
         />
       )}
     </div>

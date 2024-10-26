@@ -6,13 +6,14 @@ import { formatDateTime } from "../util/dateTimeUtil";
 import { getDisplayNameByDescription } from "../util/enumUtil";
 import fetchWithAuth from "../util/fetchUtil";
 import { useLoading } from "../util/LoadingContext";
+import CommentList from "./CommentList";
 import TiptapViewer from "./TiptapViewer";
 
 /**
  *
  * @param {*} targetBlogId 閲覧対象のブログID
  */
-export default function BlogViewer({ targetBlogId }) {
+export default function BlogViewer({ targetBlogId, showComments }) {
   // ローディング制御メソッドを取得
   const { startLoading, stopLoading } = useLoading();
   // navigateフック
@@ -20,6 +21,9 @@ export default function BlogViewer({ targetBlogId }) {
 
   // コンテンツを保持するstate
   const [blogInfo, setBlogInfo] = useState(null);
+
+  // 閲覧対象のブログが自身のブログである場合true
+  const [isMyBlog, setIsMyBlog] = useState(false);
 
   // ブログに関連するアーティストリスト
   const [artistList, setArtistList] = useState(null);
@@ -29,6 +33,12 @@ export default function BlogViewer({ targetBlogId }) {
 
   // セットリストの表示状態を管理
   const [showSetlist, setShowSetlist] = useState(true);
+
+  // ブログへのいいね状態を管理
+  const [isLikeBlog, setIsLikeBlog] = useState(false);
+
+  // 初期表示するコメントを管理
+  const [initialComments, setInitialComments] = useState([]);
 
   // ブログデータ取得処理
   const fetchBlogContent = async (blogId) => {
@@ -42,6 +52,8 @@ export default function BlogViewer({ targetBlogId }) {
       }
       const data = await response.json();
       setBlogInfo(data.blog);
+      setIsMyBlog(data.blog.author.id == localStorage.getItem("ll_userId"));
+      setIsLikeBlog(data.isLike);
       setArtistList(data.artistList);
     } catch (err) {
       // エラーが発生した場合はエラーメッセージをセット
@@ -51,12 +63,92 @@ export default function BlogViewer({ targetBlogId }) {
     }
   };
 
+  // コメントデータ取得処理
+  const fetchInitialComments = async (blogId) => {
+    startLoading();
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/comment/blog/${blogId}`
+      );
+      if (!response.ok) {
+        throw new Error("データの取得に失敗しました");
+      }
+      const data = await response.json();
+      const processedComments = data.map((item) => {
+        return {
+          ...item.comment, // commentオブジェクトの既存フィールド
+          replyCount: item.replyCount, // replyCountを追加
+        };
+      });
+      setInitialComments(processedComments);
+    } catch (err) {
+      // エラーが発生した場合はエラーメッセージをセット
+      setError("対象のコメントデータが見つかりませんでした。");
+    } finally {
+      stopLoading(); // ローディング停止
+    }
+  };
+
   // 閲覧対象のブログ変更をトリガーにデータ取得処置を呼び出す
   useEffect(() => {
     if (targetBlogId) {
       fetchBlogContent(targetBlogId);
+      fetchInitialComments(targetBlogId);
     }
   }, [targetBlogId]);
+
+  // いいね解除処理
+  const clearLikeBlog = async (blogId) => {
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/unlike/${blogId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (response.ok) {
+        const updatedLikeCount = await response.json();
+        setBlogInfo((prevBlogInfo) => ({
+          ...prevBlogInfo,
+          likeCount: updatedLikeCount, // いいね数を更新
+        }));
+      } else {
+        console.error("いいねの解除に失敗しました");
+      }
+    } catch (error) {
+      console.error("API呼び出しに失敗しました:", error);
+    } finally {
+      // 成否にかかわらずいいね状態をfalseにする
+      setIsLikeBlog(false);
+    }
+  };
+  // いいね追加処理
+  const likeBlog = async (blogId) => {
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/like/${blogId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (response.ok) {
+        const updatedLikeCount = await response.json();
+        setBlogInfo((prevBlogInfo) => ({
+          ...prevBlogInfo,
+          likeCount: updatedLikeCount, // いいね数を更新
+        }));
+      } else {
+        console.error("いいねの追加に失敗しました");
+      }
+    } catch (error) {
+      console.error("API呼び出しに失敗しました:", error);
+    } finally {
+      // 成否に関わらずいいね状態をtrueにする
+      setIsLikeBlog(true);
+    }
+  };
 
   // カテゴリに応じた背景色を返す
   const getCategoryBackgroundClass = (categoryDescription) => {
@@ -102,7 +194,7 @@ export default function BlogViewer({ targetBlogId }) {
           {/* タイトルとauthor情報*/}
           <div className="mb-4">
             {/* カテゴリ表示 */}
-            <div className="mt-2">
+            <div className="mt-2 flex justify-between items-center">
               <button
                 className={`text-white py-1 px-2 text-sm font-bold cursor-auto rounded ${getCategoryBackgroundClass(
                   blogInfo.category
@@ -111,6 +203,29 @@ export default function BlogViewer({ targetBlogId }) {
               >
                 {getDisplayNameByDescription(blogCategories, blogInfo.category)}
               </button>
+
+              {/* isMyBlogがtrueの場合のみ編集ボタンを表示 */}
+              {isMyBlog && (
+                <button
+                  className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
+                  onClick={() => navigate(`/blog/edit/${blogInfo.id}`)}
+                  type="button"
+                >
+                  <i className="fa-solid fa-pen-to-square"></i>
+                </button>
+              )}
+            </div>
+            {/* サムネイル画像 */}
+            <div className="relative w-10/12 mx-auto py-8">
+              {blogInfo.thumbnailUrl && (
+                <>
+                  <img
+                    src={`${config.apiBaseUrl}/api/public/files/${blogInfo.thumbnailUrl}`}
+                    alt="選択されたプロフィール画像"
+                    className="w-full object-contain"
+                  />
+                </>
+              )}
             </div>
             {/* タイトル */}
             <div className="w-full">
@@ -139,8 +254,23 @@ export default function BlogViewer({ targetBlogId }) {
               </div>
 
               {/* いいねカウント */}
-              <div className="flex items-center text-left">
-                <i className="fas fa-heart text-red-500 mr-1"></i>
+              <div
+                className="flex items-center text-left cursor-pointer"
+                onClick={() => {
+                  if (isLikeBlog) {
+                    // いいねを解除する
+                    clearLikeBlog(blogInfo.id);
+                  } else {
+                    // いいねを追加する
+                    likeBlog(blogInfo.id);
+                  }
+                }}
+              >
+                <i
+                  className={`fas fa-heart mr-1 ${
+                    isLikeBlog ? "text-red-500" : "text-gray-300"
+                  }`}
+                ></i>
                 <p>{blogInfo.likeCount}</p>
               </div>
             </div>
@@ -257,6 +387,17 @@ export default function BlogViewer({ targetBlogId }) {
               )}
             </div>
           )}{" "}
+          <div id="comment-section">
+            {initialComments ? (
+              <CommentList
+                initialComments={initialComments}
+                targetBlogId={targetBlogId}
+                showComments={showComments}
+              />
+            ) : (
+              <p>Loading comments...</p>
+            )}
+          </div>
         </>
       )}
     </div>

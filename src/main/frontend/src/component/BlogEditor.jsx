@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import Cropper from "react-easy-crop";
 import { useNavigate } from "react-router-dom";
 import config from "../config/properties";
 import { blogCategories } from "../constants/enum";
+import { getCroppedImg } from "../util/cropImageToCanvas";
 import { getCodeByDescription } from "../util/enumUtil";
 import fetchWithAuth from "../util/fetchUtil";
 import { useLoading } from "../util/LoadingContext";
@@ -28,6 +30,21 @@ export default function BlogEditor({ targetBlogId }) {
   const navigate = useNavigate();
   // Tiptapエディタref
   const editorRef = useRef(null);
+
+  // サムネイル画像管理に使用するstate
+  //　DBから取得したサムネイル画像を管理
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+
+  // 選択されたプロフィール画像を管理するstate
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  // 切り取られたプロフィール画像を管理するstate
+  const [croppedImage, setCroppedImage] = useState(null);
+
+  // 画像切り取りに使用する変数
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   // 確認モーダル表示状態
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,6 +121,7 @@ export default function BlogEditor({ targetBlogId }) {
 
           // ブログデータの各要素をセット
           setTitle(data.blog.title);
+          setThumbnailUrl(data.blog.thumbnailUrl);
           setSetlist(data.blog.setlist.mainSetList);
           setEncoreSections(data.blog.setlist.encoreSections);
           setCategory(getCodeByDescription(blogCategories, data.blog.category));
@@ -152,6 +170,47 @@ export default function BlogEditor({ targetBlogId }) {
       stopLoading();
     }
   }, [targetBlogId]);
+
+  // ファイル選択時の処理
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setSelectedImage(reader.result);
+    };
+  };
+
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const fileInputRef = useRef(null);
+
+  const showCroppedImage = useCallback(async () => {
+    try {
+      const croppedImage = await getCroppedImg(
+        selectedImage,
+        croppedAreaPixels
+      );
+      setCroppedImage(croppedImage);
+      setSelectedImage(null);
+      // input要素のファイル選択をリセット
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // これでinputの選択もリセットされる
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [selectedImage, croppedAreaPixels]);
+
+  // プロフィール画像またはアイコンをクリックして画像選択を開始
+  const triggerImageSelect = () => {
+    document.getElementById("profileImageInput").click();
+  };
 
   // 関連アーティストの変更をトリガーに発火する処理
   useEffect(() => {
@@ -422,41 +481,52 @@ export default function BlogEditor({ targetBlogId }) {
       console.log("contentの読み込みに失敗しました。");
       return;
     }
-    const blogData = {
-      title: title,
-      content: editor.getJSON(),
-      status: isDraft ? "DRAFT" : "PUBLISHED",
-      category: blogCategories.find((list) => list.code === category)
-        .description,
-      setlist: createSetlistJSON(),
-      artistIdList: relatedArtists.map((artist) => artist.id),
-      // 編集対象のブログIDが指定されている場合リクエストにidを含める
-      ...(targetBlogId ? { id: targetBlogId } : {}),
-    };
+
+    // FormDataを作成して、ブログデータを追加
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", JSON.stringify(editor.getJSON()));
+    formData.append("status", isDraft ? "DRAFT" : "PUBLISHED");
+    formData.append(
+      "category",
+      blogCategories.find((list) => list.code === category).description
+    );
+    formData.append("setlist", JSON.stringify(createSetlistJSON()));
+    formData.append(
+      "artistIdList",
+      relatedArtists.map((artist) => artist.id)
+    );
+    // if (targetBlogId) {
+    //   formData.append("id", targetBlogId);
+    // }
+    // croppedImageが設定されている場合はFormDataに追加
+    if (croppedImage) {
+      const response = await fetch(croppedImage);
+      const blob = await response.blob(); // 画像データをBlob形式に変換
+      formData.append("thumbnailImage", blob, "thumbnail.jpg"); // Blobデータとして追加
+    }
 
     try {
       // targetBlogIdが指定されている場合は更新用のAPIを呼び出す。
       const url = targetBlogId
-        ? `${config.apiBaseUrl}/api/blog/update`
+        ? `${config.apiBaseUrl}/api/blog/update/${targetBlogId}`
         : `${config.apiBaseUrl}/api/blog/create`;
       const response = await fetchWithAuth(url, {
         method: "POST", // POSTメソッドを使用
-        body: JSON.stringify(blogData),
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log("ブログが正常に保存されました: ", data);
         // 保存成功後閲覧画面に遷移する
-        handleSuccessToast();
+        handleSuccessToast("ブログが保存されました");
         navigate(`/blog/${data.id}`);
       } else {
         console.error("ブログ保存に失敗しました");
       }
     } catch (error) {
       console.error("エラーが発生しました: ", error);
-      console.log("エラーinput");
-      console.log(blogData);
     }
   };
 
@@ -549,6 +619,83 @@ export default function BlogEditor({ targetBlogId }) {
           </button>
         </div>
       </div>
+      {/* サムネイル画像追加パート */}
+      <>
+        <div
+          className="relative w-10/12 mx-auto py-8" // 10/12のサイズで中央寄せ
+        >
+          {croppedImage ? (
+            <img
+              src={croppedImage}
+              alt="選択されたプロフィール画像"
+              className="w-full object-contain cursor-pointer" // 縦横比16:9を保持しつつ表示
+              onClick={triggerImageSelect}
+            />
+          ) : thumbnailUrl ? (
+            <>
+              <img
+                src={`${config.apiBaseUrl}/api/public/files/${thumbnailUrl}`}
+                alt="選択されたプロフィール画像"
+                className="w-full object-contain cursor-pointer" // 縦横比16:9を保持しつつ表示
+                onClick={triggerImageSelect}
+              />
+            </>
+          ) : (
+            <div
+              className="flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full sm:-ml-12 cursor-pointer"
+              onClick={triggerImageSelect}
+            >
+              <i className="fa-regular fa-image fa-2x rounded-fulltext-blue-300 items-center"></i>
+            </div>
+          )}
+
+          {/* アイコンを中央に表示 */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center ${croppedImage || thumbnailUrl ? "cursor-pointer" : ""}`}
+            onClick={
+              croppedImage || thumbnailUrl ? triggerImageSelect : undefined
+            }
+          >
+            <i className="fa-regular fa-image fa-2x text-white"></i>{" "}
+            {/* カメラアイコン */}
+          </div>
+        </div>
+        {selectedImage && (
+          <>
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+              <div className="relative w-full max-w-md mx-auto p-4 bg-white shadow-lg">
+                <div className="relative w-full h-64">
+                  <Cropper
+                    image={selectedImage}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={16 / 9} // 固定アスペクト比
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={onCropComplete}
+                  />
+                </div>
+                <div className="flex justify-center mt-4">
+                  <button
+                    type="button"
+                    className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded"
+                    onClick={showCroppedImage}
+                  >
+                    画像を切り取る
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+        <input
+          id="profileImageInput"
+          type="file"
+          className="hidden"
+          onChange={handleImageChange}
+        />
+      </>
+
       {/* タイトル入力欄とカテゴリ選択欄 */}
       <div className="flex flex-col sm:flex-row sm:items-center mb-4">
         <div className="flex-grow sm:mr-4 mb-4 sm:mb-0">

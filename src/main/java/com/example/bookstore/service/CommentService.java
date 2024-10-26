@@ -1,10 +1,13 @@
 package com.example.bookstore.service;
 
+import com.example.bookstore.dto.repository.ParentCommentRepositoryDto;
+import com.example.bookstore.dto.view.ParentCommentViewDto;
 import com.example.bookstore.entity.Comment;
 import com.example.bookstore.entity.CommentTree;
 import com.example.bookstore.entity.Notification;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.entity.code.NotificationType;
+import com.example.bookstore.entity.key.CommentTreeId;
 import com.example.bookstore.repository.jpa.CommentRepository;
 import com.example.bookstore.repository.jpa.CommentTreeRepository;
 import com.example.bookstore.service.util.UserUtilService;
@@ -47,24 +50,25 @@ public class CommentService {
     private NotificationService notificationService;
 
     /**
-     * 指定されたブログに対するコメントを全件取得します。
+     * 指定されたブログに対する親コメントを全件取得します。
      * コメントは親コメントIDおよび返信順の昇順にソートされます。
      *
      * @param blogId ブログID
      * @return コメントリスト
      */
-    public List<Comment> getCommentsByBlogId(Long blogId) {
-        return commentRepository.findCommentsByBlogId(blogId);
+    public List<ParentCommentViewDto> getCommentsByBlogId(Long blogId) {
+        List<ParentCommentRepositoryDto> repositoryDtoList = commentRepository.findParentCommentsByBlogId(blogId);
+        return ParentCommentViewDto.build(repositoryDtoList);
     }
 
     /**
-     * 指定されたコメントとその返信を取得します。
+     * 指定されたコメントの子コメント（返信）を取得します。
      *
      * @param parentId 親コメントID
      * @return コメントリスト
      */
     public List<Comment> getCommentsAndRepliesByParentId(Long parentId) {
-        return commentRepository.findCommentsAndRepliesByParentId(parentId);
+        return commentTreeRepository.findRepliesByParentCommentId(parentId);
     }
 
 
@@ -91,6 +95,7 @@ public class CommentService {
      * @param replyComment    返信コメント情報
      * @return 登録された返信コメント
      */
+    @Transactional
     public Comment registerReplyComment(Long parentCommentId, Comment replyComment) {
         //返信コメントをcommentテーブルに登録
         Comment registerdComment = registerComment(replyComment);
@@ -99,6 +104,7 @@ public class CommentService {
         Integer replyCount = commentTreeRepository.countRepliesByParentCommentId(parentCommentId);
         //commentTreeテーブルに親コメントと返信コメントの関連を登録
         CommentTree commentTree = CommentTree.builder()
+                .id(new CommentTreeId(parentCommentId, registerdComment.getId()))
                 .parentComment(commentRepository.findById(parentCommentId).orElseThrow())
                 .replyComment(registerdComment)
                 .replyNumber(replyCount + 1)

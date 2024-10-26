@@ -6,12 +6,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * ダッシュボードリポジトリDTO
+ * ダッシュボード用ブログリポジトリDTO
  */
 @Data
 @Builder
-//コンストラクタないのにDB結果をマッピングできている、なぜなのか？
-public class DashboardRepositoryDto {
+public class DashboardBlogRepositoryDto {
 
     /**
      * ブログID
@@ -21,6 +20,10 @@ public class DashboardRepositoryDto {
      * ブログタイトル
      */
     private String blogTitle;
+    /**
+     * サムネイル画像
+     */
+    private String thumbnailUrl;
     /**
      * ブログ著者のプロフィール画像
      */

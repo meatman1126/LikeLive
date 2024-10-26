@@ -16,8 +16,11 @@ export const getCroppedImg = (imageSrc, crop) => {
     const aspectRatio = image.width / image.height;
     const size = Math.min(image.width, image.height);
 
-    canvas.width = size;
-    canvas.height = size;
+    // canvas.width = size;
+    // canvas.height = size;
+    // キャンバスのサイズをcropのサイズに設定
+    canvas.width = crop.width;
+    canvas.height = crop.height;
     if (
       !crop ||
       typeof crop.x !== "number" ||

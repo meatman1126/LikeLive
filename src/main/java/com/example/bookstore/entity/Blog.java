@@ -131,4 +131,10 @@ public class Blog extends BaseEntity {
     @OneToMany(mappedBy = "blog")
     private Set<BlogArtist> blogArtists;
 
+    /**
+     * ユーザブログリレーション（ブログにいいねしたユーザを保持）
+     */
+    @OneToMany(mappedBy = "blog")
+    private Set<UserBlogLike> likedByUsers;
+
 }

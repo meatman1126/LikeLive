@@ -58,4 +58,11 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user")
     private Set<UserArtist> userArtists;
 
+    /**
+     * ユーザブログリレーション（ユーザがいいねをしたブログデータを保持）
+     */
+    @OneToMany(mappedBy = "user")
+    private Set<UserBlogLike> likedBlogs;
+
+
 }

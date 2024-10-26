@@ -12,10 +12,11 @@ import "./App.css";
 
 import Spinner from "./component/Spinner";
 
+import StoryComponent from "./component/CommentList";
 import ProtectedRoute from "./config/ProtectedRouter";
 import Blog from "./page/Blog";
+import BlogSearch from "./page/BlogSearch";
 import Dashboard from "./page/Dashboard";
-import Sample from "./page/Sample";
 import Top from "./page/Top";
 import User from "./page/User";
 import { LoadingProvider, useLoading } from "./util/LoadingContext";
@@ -100,10 +101,21 @@ function AppContent() {
             />
 
             <Route
+              path="/blog/search"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <BlogSearch
+                    isAuthenticated={isAuthenticated}
+                    setIsAuthenticated={setIsAuthenticated}
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/sample"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Sample />
+                  <StoryComponent />
                 </ProtectedRoute>
               }
             />

@@ -48,6 +48,17 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     List<FollowRepositoryDto> findFollowersInfo(@Param("userId") Long userId);
 
     /**
+     * 指定した2ユーザのフォロー有無を確認します。
+     *
+     * @param followerId フォローしているユーザ
+     * @param followedId フォローされているユーザ
+     * @return フォローしている場合はtrue、フォローしていない場合はfalse
+     */
+    @Query("SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END " +
+            "FROM Follow f WHERE f.follower.id = :followerId AND f.followed.id = :followedId")
+    Boolean isFollowing(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
+
+    /**
      * 指定したユーザがフォローしているユーザ数をカウントします。
      *
      * @param userId ユーザID

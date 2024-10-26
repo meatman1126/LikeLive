@@ -33,9 +33,6 @@ import fetchWithAuth from "../util/fetchUtil";
  * 編集対象のブログがある場合propsにcontentが指定されて呼び出される
  */
 const TiptapEditor = forwardRef((props, ref) => {
-  // 親コンポーネントからeditorにアクセスできるようにする
-  useImperativeHandle(ref, () => editor, [editor]);
-
   // Tiptapエディタ
   const editor = useEditor({
     extensions: [
@@ -54,12 +51,23 @@ const TiptapEditor = forwardRef((props, ref) => {
       }),
     ],
     // コンテンツが指定された場合それを読み込む、未指定の場合は空
-    content: props.content ? props.content : "",
+    // content: props.content ? props.content : "",
+    content: "",
     onUpdate: ({ editor }) => {
       // カーソルが移動したらボタンの位置を更新
       updateInsertButtonPosition(editor);
     },
   });
+  // 親コンポーネントからeditorにアクセスできるようにする
+  useImperativeHandle(ref, () => editor, [editor]);
+
+  // props.contentが変更された場合にエディタのコンテンツを更新する
+  useEffect(() => {
+    if (editor && props.content) {
+      editor.commands.setContent(props.content);
+    }
+  }, [props.content, editor]);
+
   // 挿入メニューのボタン（onClickとclassNameをプロパティに含める）
   const insertButtons = [
     {

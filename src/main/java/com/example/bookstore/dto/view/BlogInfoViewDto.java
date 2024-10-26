@@ -22,4 +22,9 @@ public class BlogInfoViewDto {
      * アーティストリスト
      */
     private List<Artist> artistList;
+
+    /**
+     * いいね有無（ログインユーザがブログにいいねしている場合true）
+     */
+    private Boolean isLike;
 }

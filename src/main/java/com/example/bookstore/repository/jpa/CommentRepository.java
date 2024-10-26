@@ -1,6 +1,8 @@
 package com.example.bookstore.repository.jpa;
 
+import com.example.bookstore.dto.repository.ParentCommentRepositoryDto;
 import com.example.bookstore.entity.Comment;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -28,18 +30,23 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "ORDER BY ct.parentComment.id ASC, ct.replyNumber ASC")
     List<Comment> findCommentsByBlogId(@Param("blogId") Long blogId);
 
+
     /**
-     * 指定されたコメントとその返信を取得します（論理削除されていないデータ）。
+     * 指定されたブログIDの親コメントを取得します。
      *
-     * @param parentId コメントID
-     * @return コメントリスト
+     * @param blogId ブログID
+     * @return 親コメント
      */
-    @Query("SELECT c FROM Comment c " +
-            "LEFT JOIN CommentTree ct ON c.id = ct.parentComment.id " +
-            "WHERE ct.parentComment.id = :parentId " +
+    @EntityGraph(attributePaths = {"author"})  // author を即時ロードする
+    @Query("SELECT new com.example.bookstore.dto.repository.ParentCommentRepositoryDto(c, " +
+            "(SELECT COUNT(ct) FROM CommentTree ct WHERE ct.parentComment = c)) " +
+            "FROM Comment c " +
+            "LEFT JOIN CommentTree ct ON ct.replyComment = c " +
+            "WHERE c.blog.id = :blogId " +
+            "AND ct.replyComment IS NULL " +  // 結合先がないもの（親コメント）を取得
             "AND c.isDeleted = false " +
-            "ORDER BY ct.replyNumber ASC")
-    List<Comment> findCommentsAndRepliesByParentId(@Param("parentId") Long parentId);
+            "ORDER BY c.commentCreatedTime DESC")
+    List<ParentCommentRepositoryDto> findParentCommentsByBlogId(@Param("blogId") Long blogId);
 
     /**
      * commentsテーブルの指定されたレコードを更新します。

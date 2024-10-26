@@ -1,13 +1,11 @@
 package com.example.bookstore.dto.form.blog;
 
-import com.example.bookstore.entity.Setlist;
 import com.example.bookstore.entity.code.BlogCategory;
 import com.example.bookstore.entity.code.BlogStatus;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ブログ情報アップデートForm
@@ -17,11 +15,6 @@ import java.util.Map;
 public class BlogUpdateForm {
 
     /**
-     * ブログID
-     */
-    private Long id;
-
-    /**
      * 記事のタイトル
      */
     private String title;
@@ -29,7 +22,7 @@ public class BlogUpdateForm {
     /**
      * 記事のコンテンツ (リッチテキスト / HTML)
      */
-    private Map<String, Object> content;
+    private String content;
 
     /**
      * 記事のステータス (下書き、公開済み、アーカイブ)
@@ -59,7 +52,7 @@ public class BlogUpdateForm {
     /**
      * セットリスト
      */
-    private Setlist setlist;
+    private String setlist;
 
     /**
      * アーティストIDリスト
