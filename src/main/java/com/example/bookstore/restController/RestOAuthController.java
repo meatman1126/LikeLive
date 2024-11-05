@@ -24,6 +24,9 @@ public class RestOAuthController {
     @Value("${spring.security.oauth2.client.registration.google.clientSecret}")
     private String clientSecret;
 
+    @Value(("${oauth.redirect.uri}"))
+    private String redirectUri;
+
     @PostMapping("/api/oauth/callback")
     public ResponseEntity<?> handleGoogleCallback(@RequestBody Map<String, String> body) {
         String code = body.get("code");
@@ -37,7 +40,7 @@ public class RestOAuthController {
         params.add("code", code);
         params.add("client_id", clientId);
         params.add("client_secret", clientSecret);
-        params.add("redirect_uri", "http://localhost:3000/login/callback");
+        params.add("redirect_uri", redirectUri);
         params.add("grant_type", "authorization_code");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);

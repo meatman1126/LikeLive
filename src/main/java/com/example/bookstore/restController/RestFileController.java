@@ -2,16 +2,12 @@ package com.example.bookstore.restController;
 
 import com.example.bookstore.service.util.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -28,13 +24,6 @@ public class RestFileController {
     StorageService storageService;
 
     /**
-     * ファイルのアップロードDir
-     * TODO　ローカルにしか使えないので修正
-     */
-    @Value("${storage.local.upload-dir}")
-    private String uploadDir;
-
-    /**
      * 指定されたファイルを取得します。
      *
      * @param filename ファイル名
@@ -43,8 +32,7 @@ public class RestFileController {
     @GetMapping("/public/files/{filename}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
-            Path file = Paths.get(uploadDir).resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
+            Resource resource = storageService.getFile(filename);
 
             // ファイルが存在し、アクセス可能か確認
             if (resource.exists() || resource.isReadable()) {

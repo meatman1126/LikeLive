@@ -100,7 +100,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
     onSuccess: async (tokenResponse) => {},
     flow: "auth-code", // リダイレクト方式を指定
     ux_mode: "redirect",
-    redirect_uri: "http://localhost:3000/login/callback", // リダイレクト先を指定
+    redirect_uri: config.oauthRedirectUri, // リダイレクト先を指定
 
     onError: (errorResponse) => {
       console.log(errorResponse);

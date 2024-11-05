@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/index"
                         ).permitAll()
                         // /api/public 配下は未認証のユーザもアクセス可能
+                        .requestMatchers("/login/callback").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/static/**").permitAll()
@@ -46,5 +47,5 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-    
+
 }

@@ -1,20 +1,23 @@
 package com.example.bookstore.service.util;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 /**
- * TODO しっかりコメントを書く
+ *
  */
 public class LocalStorageService implements StorageService {
 
-    @Value("${storage.local.upload-dir}")
+    @Value("${storage.upload-dir}")
     private String uploadDir;
 
     @Override
@@ -32,6 +35,13 @@ public class LocalStorageService implements StorageService {
             throw new RuntimeException("ファイル保存中にエラーが発生しました", e);
         }
     }
+
+    @Override
+    public Resource getFile(String fileName) throws MalformedURLException {
+        Path file = Paths.get(uploadDir).resolve(fileName);
+        return new UrlResource(file.toUri());
+    }
+
 
     @Override
     public void deleteFile(String fileName) {
