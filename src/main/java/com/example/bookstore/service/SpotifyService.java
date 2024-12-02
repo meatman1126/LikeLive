@@ -16,6 +16,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class SpotifyService {
     private static final Logger logger = LoggerFactory.getLogger(SpotifyService.class);
@@ -26,7 +29,7 @@ public class SpotifyService {
     @Value("${spotify.client-secret}")
     private String clientSecret;
 
-    public String getAccessToken() throws JsonProcessingException {
+    public Map<String, String> getAccessToken() throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -51,7 +54,9 @@ public class SpotifyService {
         SpotifyTokenResponse tokenResponse = new ObjectMapper().readValue(response.getBody(), SpotifyTokenResponse.class);
 
         if (tokenResponse != null) {
-            return tokenResponse.getAccessToken();
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("accessToken", tokenResponse.getAccessToken());
+            return responseMap;
         } else {
             throw new RuntimeException("Failed to get access token");
         }

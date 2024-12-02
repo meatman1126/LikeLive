@@ -5,16 +5,14 @@ import com.example.bookstore.entity.code.BlogStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
+/**
+ * ブログ情報アップデートForm
+ */
 @Data
 @Builder
 public class BlogUpdateForm {
-
-    /**
-     * ブログID
-     */
-    private Long id;
 
     /**
      * 記事のタイトル
@@ -54,5 +52,11 @@ public class BlogUpdateForm {
     /**
      * セットリスト
      */
-    private LinkedHashMap<String, String> setlist;
+    private String setlist;
+
+    /**
+     * アーティストIDリスト
+     */
+    private List<String> artistIdList;
+
 }

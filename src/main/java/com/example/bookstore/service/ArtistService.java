@@ -8,12 +8,21 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+/**
+ * アーティストサービスクラス
+ */
 @Service
 public class ArtistService {
 
+    /**
+     * アーティストリポジトリ
+     */
     @Autowired
     ArtistRepository artistRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     UserUtilService userUtilService;
 
@@ -24,7 +33,6 @@ public class ArtistService {
      * @return idに合致するartist
      */
     public Artist findById(String id) {
-
         return artistRepository.findById(id).orElse(null);
     }
 

@@ -11,21 +11,7 @@ import java.util.List;
 public class UserRegistrationForm {
     private String userName;
 
+    private String profileImagePath;
+
     private List<Artist> artistList;
-
-    @Override
-    public String toString() {
-        return "UserRegistrationRequest{" +
-                "userName='" + userName + '\'' +
-                '}';
-    }
-
-//    @Data
-//    public static class Artist {
-//        private String id;
-//        private String name;
-//
-//        private String imageUrl;
-//    }
-
 }

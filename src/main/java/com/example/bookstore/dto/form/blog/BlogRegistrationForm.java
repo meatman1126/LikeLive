@@ -5,8 +5,11 @@ import com.example.bookstore.entity.code.BlogStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
+/**
+ * ブログ情報登録Form
+ */
 @Data
 @Builder
 public class BlogRegistrationForm {
@@ -20,9 +23,6 @@ public class BlogRegistrationForm {
      * 記事のコンテンツ (リッチテキスト / HTML)
      */
     private String content;
-
-    // TODO 記事のコンテンツ (画像や動画を埋め込めるようにしたいので修正)
-
 
     /**
      * 記事のステータス (下書き、公開済み、アーカイブ)
@@ -52,6 +52,11 @@ public class BlogRegistrationForm {
     /**
      * セットリスト
      */
-    private LinkedHashMap<String, String> setlist;
+    private String setlist;
+
+    /**
+     * アーティストIDリスト
+     */
+    private List<String> artistIdList;
 
 }

@@ -3,6 +3,7 @@ package com.example.bookstore.restController;
 import com.example.bookstore.dto.form.comment.CommentDeleteForm;
 import com.example.bookstore.dto.form.comment.CommentRegistrationForm;
 import com.example.bookstore.dto.form.comment.CommentUpdateForm;
+import com.example.bookstore.dto.view.ParentCommentViewDto;
 import com.example.bookstore.entity.Comment;
 import com.example.bookstore.repository.jpa.BlogRepository;
 import com.example.bookstore.service.CommentService;
@@ -15,15 +16,28 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Restコメントコントローラ
+ */
 @RestController
+@RequestMapping("/api")
 public class RestCommentController {
 
+    /**
+     * コメントサービス
+     */
     @Autowired
     private CommentService commentService;
 
+    /**
+     * ブログリポジトリ
+     */
     @Autowired
     private BlogRepository blogRepository;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
@@ -33,19 +47,19 @@ public class RestCommentController {
      * @param blogId ブログID
      * @return コメントリスト
      */
-    @GetMapping("/blog/{blogId}")
-    public ResponseEntity<List<Comment>> getCommentsByBlogId(@PathVariable Long blogId) {
-        List<Comment> comments = commentService.getCommentsByBlogId(blogId);
+    @GetMapping("/comment/blog/{blogId}")
+    public ResponseEntity<List<ParentCommentViewDto>> getCommentsByBlogId(@PathVariable Long blogId) {
+        List<ParentCommentViewDto> comments = commentService.getCommentsByBlogId(blogId);
         return ResponseEntity.ok(comments);
     }
 
     /**
-     * 指定されたコメントとその返信を取得します。
+     * 指定されたコメントの子コメント（返信）を取得します。
      *
      * @param parentId 親コメントID
      * @return コメントリスト
      */
-    @GetMapping("/parent/{parentId}")
+    @GetMapping("/comment/parent/{parentId}")
     public ResponseEntity<List<Comment>> getCommentsAndRepliesByParentId(@PathVariable Long parentId) {
         List<Comment> comments = commentService.getCommentsAndRepliesByParentId(parentId);
         return ResponseEntity.ok(comments);
@@ -116,7 +130,7 @@ public class RestCommentController {
      */
     @PostMapping("/comment/delete")
     public ResponseEntity<Void> deleteComment(@RequestBody CommentDeleteForm form) {
-        boolean isDeleted = commentService.deleteComment(form.getCommentId());
+        Boolean isDeleted = commentService.deleteComment(form.getCommentId());
         if (isDeleted) {
             return ResponseEntity.ok().build();
         } else {

@@ -12,26 +12,39 @@ import com.example.bookstore.service.util.UserUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Rest通知コントローラ
+ */
 @RestController
+@RequestMapping("/api")
 public class RestNotificationController {
 
+    /**
+     * 通知サービス
+     */
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * ユーザサービス
+     */
     @Autowired
     private UserService userService;
 
+    /**
+     * ユーザユーティルサービス
+     */
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * ブログサービス
+     */
     @Autowired
     private BlogService blogService;
 
@@ -78,6 +91,17 @@ public class RestNotificationController {
     public ResponseEntity<Void> markNotificationsAsRead(@RequestBody List<Long> notificationIds) {
         notificationService.markNotificationsAsRead(notificationIds);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    /**
+     * ログインユーザの未読通知をすべて既読にします。
+     *
+     * @return 成功メッセージ
+     */
+    @PostMapping("/notification/mark-all-read")
+    public ResponseEntity<String> markAllUnreadNotificationsAsRead() {
+        notificationService.markAllUnreadNotificationsAsRead(userUtilService.getCurrentUser().getId());
+        return ResponseEntity.ok("未読の通知がすべて既読になりました。");
     }
 
     /**

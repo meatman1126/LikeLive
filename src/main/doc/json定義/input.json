@@ -1,0 +1,58 @@
+{
+    "title": "Sample Blog Title",
+    "content": {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "This is a sample blog content."
+                    }
+                ]
+            }
+        ]
+    },
+    "status": "DRAFT",
+    "tags": "sample, blog, music",
+    "thumbnailUrl": "https://example.com/thumbnail.jpg",
+    "slug": "sample-blog-title1",
+    "category": "REPORT",
+    "setlist": {
+        "mainSetList": [
+            {
+                "trackNumber": 1,
+                "trackName": "Main Setlist Song 1"
+            },
+            {
+                "trackNumber": 2,
+                "trackName": "Main Setlist Song 2"
+            }
+        ],
+        "encoreSections": [
+            {
+                "encoreNumber": 1,
+                "encoreTracks": [
+                    {
+                        "trackNumber": 1,
+                        "trackName": "Encore Song 1"
+                    },
+                    {
+                        "trackNumber": 2,
+                        "trackName": "Encore Song 2"
+                    }
+                ]
+            },
+            {
+                "encoreNumber": 2,
+                "encoreTracks": [
+                    {
+                        "trackNumber": 1,
+                        "trackName": "Encore Song 3"
+                    }
+                ]
+            }
+        ]
+    }
+}

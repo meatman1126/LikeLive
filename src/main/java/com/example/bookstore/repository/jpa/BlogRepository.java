@@ -1,29 +1,94 @@
 package com.example.bookstore.repository.jpa;
 
+import com.example.bookstore.dto.repository.DashboardBlogRepositoryDto;
 import com.example.bookstore.entity.Blog;
+import com.example.bookstore.entity.code.BlogStatus;
+import lombok.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * ブログリポジトリインターフェース
+ */
 public interface BlogRepository extends JpaRepository<Blog, Long> {
+
+    /**
+     * 指定されたブログ情報を取得します。
+     * 関連エンティティの著者情報（author）を即時ロードします。
+     *
+     * @param id ブログID
+     * @return 指定されたブログ情報
+     */
+    @EntityGraph(attributePaths = {"author"})
+    @NonNull Optional<Blog> findById(@NonNull Long id);
+
+    /**
+     * 指定されたユーザが作成した公開中のブログ記事を取得します。
+     * 取得結果はブログ作成日時の降順にソートされます。
+     *
+     * @param userId ユーザID
+     * @return ブログ記事リスト
+     */
+    @Query("SELECT b FROM Blog b " +
+            "WHERE b.author.id = :userId " +
+            "AND b.status = 'PUBLISHED' " +  // PUBLISHEDステータスを条件に追加
+            "AND b.isDeleted = false " +
+            "ORDER BY b.blogCreatedTime DESC")
+    List<Blog> findPublishedBlogsByUserId(@Param("userId") Long userId);
 
 
     /**
-     * キーワードに合致するブログ記事を閲覧回数の降順にソートして取得します（論理削除されていないデータ）。
+     * 指定されたユーザが作成した下書きのブログ記事を取得します。
+     * 取得結果はブログ作成日時の降順にソートされます。
      *
-     * @param keyword 検索キーワード
-     * @return キーワードに合致するブログ記事リスト
+     * @param userId ユーザID
+     * @return ブログ記事リスト
      */
-    @Query("SELECT b FROM Blog b WHERE " +
+    @Query("SELECT b FROM Blog b " +
+            "WHERE b.author.id = :userId " +
+            "AND b.status = 'DRAFT' " +
+            "AND b.isDeleted = false " +
+            "ORDER BY b.blogCreatedTime DESC")
+    List<Blog> findDraftBlogsByUserId(@Param("userId") Long userId);
+
+    /**
+     * 指定されたユーザの非公開状態のブログ記事を取得します。
+     * 取得結果はブログ作成日時の降順にソートされます。
+     *
+     * @param userId ユーザID
+     * @return ブログ記事リスト
+     */
+    @Query("SELECT b FROM Blog b " +
+            "WHERE b.author.id = :userId " +
+            "AND b.status = 'ARCHIVED' " +
+            "AND b.isDeleted = false " +
+            "ORDER BY b.blogCreatedTime DESC")
+    List<Blog> findArchiveBlogsByUserId(@Param("userId") Long userId);
+
+    /**
+     * キーワードに合致するブログ記事をページネーションとソートを用いて取得します。
+     * ブログに関連するアーティスト名も検索対象に含め、ステータスがPUBLISHEDのもののみ取得します。
+     *
+     * @param keyword  検索キーワード
+     * @param pageable ページネーションとソート情報
+     * @return キーワードに合致するブログ記事リスト（ページネーション対応）
+     */
+    @EntityGraph(attributePaths = {"author"})
+    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN b.blogArtists ba LEFT JOIN ba.artist a WHERE " +
             "(LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(b.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(b.tags) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND b.isDeleted = false " +
-            "ORDER BY b.viewCount DESC")
-    List<Blog> searchBlogsByKeyword(@Param("keyword") String keyword);
+            "LOWER(b.tags) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND b.isDeleted = false AND b.status = 'PUBLISHED'")
+    Page<Blog> searchBlogsByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     /**
      * 指定したユーザがフォローしているユーザが作成したブログ記事を取得します（論理削除されていないデータ）。
@@ -61,32 +126,41 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
             "b.updatedBy = :#{#blog.updatedBy}, " +
             "b.blogUpdatedTime = :#{#blog.blogUpdatedTime}, " +
             "b.category = :#{#blog.category}, " +
-            "b.commentCount = :#{#blog.commentCount}, " +
             "b.content = :#{#blog.content}, " +
-            "b.likeCount = :#{#blog.likeCount}, " +
             "b.slug = :#{#blog.slug}, " +
             "b.status = :#{#blog.status}, " +
             "b.tags = :#{#blog.tags}, " +
             "b.thumbnailUrl = :#{#blog.thumbnailUrl}, " +
             "b.title = :#{#blog.title}, " +
-            "b.viewCount = :#{#blog.viewCount}, " +
             "b.setlist = :#{#blog.setlist} " +
-            "WHERE b.id = :#{#blog.id}")
-    void update(@Param("blog") Blog blog);
+            "WHERE b.id = :id")
+    void update(@Param("id") Long id, @Param("blog") Blog blog);
+
+    /**
+     * 指定されたブログデータを非公開にします。
+     *
+     * @param blogId    ブログID
+     * @param updatedBy 更新ユーザID
+     * @return 更新された行数
+     */
+    @Modifying
+    @Query("UPDATE Blog b " +
+            "SET b.status = 'ARCHIVED', b.updatedBy = :updatedBy " +
+            "WHERE b.id = :blogId")
+    int unpublishBlog(@Param("blogId") Long blogId, @Param("updatedBy") String updatedBy);
 
     /**
      * blogsテーブルの指定されたレコードを論理削除します。
      *
-     * @param id         削除対象のブログID
-     * @param deleteFlag 削除フラグ
-     * @param userId     更新ユーザID
+     * @param id     削除対象のブログID
+     * @param userId 更新ユーザID
      */
     @Modifying
     @Query("UPDATE Blog b SET " +
-            "b.isDeleted = :isDeleted," +
+            "b.isDeleted = true," +
             "b.updatedBy = :updatedBy " +
             "WHERE b.id = :id")
-    void delete(@Param("id") Long id, @Param("isDeleted") boolean deleteFlag, @Param("updatedBy") String userId);
+    void delete(@Param("id") Long id, @Param("updatedBy") String userId);
 
 
     /**
@@ -112,8 +186,9 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
      */
     @Modifying
     @Query("UPDATE Blog b SET " +
-            "b.likeCount = :likeCount," +
-            "b.updatedBy = :updatedBy " +
+            "b.likeCount = :likeCount, " +
+            "b.updatedBy = :updatedBy, " +
+            "b.updatedAt = CURRENT_TIMESTAMP " +
             "WHERE b.id = :id")
     void updateLikeCount(@Param("id") Long id, @Param("likeCount") int likeCount, @Param("updatedBy") String userId);
 
@@ -130,6 +205,28 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
             "b.updatedBy = :updatedBy " +
             "WHERE b.id = :id")
     void updateCommentCount(@Param("id") Long id, @Param("commentCount") int commentCount, @Param("updatedBy") String userId);
+
+    /**
+     * ダッシュボードに表示する興味のあるブログ記事を取得します。
+     * フォロー中のユーザの記事を優先的に取得します。
+     *
+     * @param userId   現在のユーザID
+     * @param pageable ページネーション情報
+     * @return ダッシュボード表示用のブログ記事リスト
+     */
+    @Query("SELECT new com.example.bookstore.dto.repository.DashboardBlogRepositoryDto(" +
+            "b.id, b.title, b.thumbnailUrl, b.author.profileImageUrl, b.author.displayName, " +
+            "CASE WHEN (SELECT COUNT(f) FROM Follow f WHERE f.follower.id = :userId AND f.followed.id = b.author.id) > 0 THEN true ELSE false END, " +
+            "b.blogCreatedTime) " +
+            "FROM Blog b " +
+            "WHERE b.author.id <> :userId " +
+            "AND b.status = :publishedStatus " +  // 公開済み状態のみ取得
+            "ORDER BY CASE WHEN b.author.id IN " +
+            "(SELECT f.followed.id FROM Follow f WHERE f.follower.id = :userId) THEN 0 ELSE 1 END ASC, " +
+            "b.blogCreatedTime DESC")
+    List<DashboardBlogRepositoryDto> findInterestBlogs(@Param("userId") Long userId,
+                                                       @Param("publishedStatus") BlogStatus publishedStatus,
+                                                       Pageable pageable);
 
 
 }

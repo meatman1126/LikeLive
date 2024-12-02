@@ -1,6 +1,7 @@
 package com.example.bookstore.repository.jpa;
 
 import com.example.bookstore.entity.Notification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,10 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+/**
+ * 通知リポジトリインターフェース
+ */
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     /**
@@ -26,6 +31,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * @param userId ユーザID
      * @return 未読通知のリスト
      */
+    @EntityGraph(attributePaths = {"triggerUser", "relatedBlog", "relatedComment"})
     @Query("SELECT n FROM Notification n WHERE n.targetUser.id = :userId AND n.isRead = false AND n.isDeleted = false ORDER BY n.notificationCreatedAt DESC")
     List<Notification> findUnreadNotificationsByUserId(@Param("userId") Long userId);
 
@@ -111,4 +117,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             @Param("readAt") LocalDateTime readAt,
             @Param("userId") String userId
     );
+
+    @Modifying
+    @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP, n.updatedBy = :updatedBy, n.updatedAt = CURRENT_TIMESTAMP " +
+            "WHERE n.targetUser.id = :userId AND n.isRead = false AND n.isDeleted = false")
+    void markAllUnreadNotifications(@Param("userId") Long userId, @Param("updatedBy") String updatedBy);
 }

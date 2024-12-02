@@ -32,7 +32,7 @@ public class User extends BaseEntity {
      * 利用可否 利用可能ユーザの場合true
      */
     @Column(nullable = false)
-    private boolean enabled;
+    private Boolean enabled;
 
     /**
      * Idpにより提供される一意なキー
@@ -52,7 +52,17 @@ public class User extends BaseEntity {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    /**
+     * ユーザアーティストリレーション
+     */
     @OneToMany(mappedBy = "user")
     private Set<UserArtist> userArtists;
+
+    /**
+     * ユーザブログリレーション（ユーザがいいねをしたブログデータを保持）
+     */
+    @OneToMany(mappedBy = "user")
+    private Set<UserBlogLike> likedBlogs;
+
 
 }

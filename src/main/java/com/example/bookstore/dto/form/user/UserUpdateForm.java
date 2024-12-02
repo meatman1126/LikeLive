@@ -1,8 +1,14 @@
 package com.example.bookstore.dto.form.user;
 
+import com.example.bookstore.entity.Artist;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
+/**
+ * ユーザ情報更新Form
+ */
 @Data
 @Builder
 public class UserUpdateForm {
@@ -17,10 +23,12 @@ public class UserUpdateForm {
      */
     private String selfIntroduction;
 
-    /**
-     * プロフィール画像URL
-     */
-    private String profileImageUrl;
+    private String profileImagePath;
 
-    
+    /**
+     * アーティストリスト
+     */
+    private List<Artist> favoriteArtistList;
+
+
 }

@@ -1,5 +1,6 @@
 package com.example.bookstore.entity;
 
+import com.example.bookstore.dto.converter.ContentConverter;
 import com.example.bookstore.dto.converter.SetlistConverter;
 import com.example.bookstore.entity.code.BlogCategory;
 import com.example.bookstore.entity.code.BlogStatus;
@@ -10,7 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * ブログエンティティクラス
@@ -21,7 +23,6 @@ import java.util.LinkedHashMap;
 @SuperBuilder
 @Data
 @NoArgsConstructor
-//@Document(indexName = "blogs")
 public class Blog extends BaseEntity {
 
     @Id
@@ -35,10 +36,11 @@ public class Blog extends BaseEntity {
     private String title;
 
     /**
-     * 記事のコンテンツ (リッチテキスト / HTML)
+     * 記事のコンテンツ (リッチテキスト / JSON)
      */
-    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
-    private String content;
+    @Convert(converter = ContentConverter.class)
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private Map<String, Object> content;
 
     /**
      * 記事のステータス (下書き、公開済み、アーカイブ)
@@ -114,11 +116,25 @@ public class Blog extends BaseEntity {
      * 削除フラグ
      */
     @Column(nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
-    // LinkedHashMapでセットリストを扱うためのフィールド
+    /**
+     * セットリスト
+     */
     @Convert(converter = SetlistConverter.class)
     @Column(columnDefinition = "TEXT")
-    private LinkedHashMap<String, String> setlist;
+    private Setlist setlist;
+
+    /**
+     * ブログアーティストリレーション
+     */
+    @OneToMany(mappedBy = "blog")
+    private Set<BlogArtist> blogArtists;
+
+    /**
+     * ユーザブログリレーション（ブログにいいねしたユーザを保持）
+     */
+    @OneToMany(mappedBy = "blog")
+    private Set<UserBlogLike> likedByUsers;
 
 }

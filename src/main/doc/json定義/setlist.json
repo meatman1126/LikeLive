@@ -1,0 +1,36 @@
+{
+    "mainSetList": [
+        {
+            "trackNumber": 1,
+            "trackName": "Main Setlist Song 1"
+        },
+        {
+            "trackNumber": 2,
+            "trackName": "Main Setlist Song 2"
+        }
+    ],
+    "encoreSections": [
+        {
+            "encoreNumber": 1,
+            "encoreTracks": [
+                {
+                    "trackNumber": 1,
+                    "trackName": "Encore Song 1"
+                },
+                {
+                    "trackNumber": 2,
+                    "trackName": "Encore Song 2"
+                }
+            ]
+        },
+        {
+            "encoreNumber": 2,
+            "encoreTracks": [
+                {
+                    "trackNumber": 1,
+                    "trackName": "Encore Song 3"
+                }
+            ]
+        }
+    ]
+}

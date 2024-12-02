@@ -48,7 +48,7 @@ public class Notification extends BaseEntity {
      * 通知が既読か未読か
      */
     @Column(name = "is_read", nullable = false)
-    private boolean isRead;
+    private Boolean isRead;
 
     /**
      * 通知の作成日時
@@ -80,6 +80,6 @@ public class Notification extends BaseEntity {
      * 削除フラグ
      */
     @Column(nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
 }
