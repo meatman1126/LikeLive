@@ -13,12 +13,15 @@ import com.example.bookstore.service.UserService;
 import com.example.bookstore.service.util.UserUtilService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * Restユーザコントローラ
@@ -173,6 +176,25 @@ public class RestUserController {
         ProfileViewDto profile = userService.getUserProfile(targetUserId, isOthersInfo);
         return ResponseEntity.ok(profile);
     }
+
+    /**
+     * キーワードに合致するユーザを取得します。
+     *
+     * @param keyword 検索キーワード
+     * @return 該当するユーザリスト
+     */
+    @GetMapping("/user/search")
+    public ResponseEntity<List<User>> searchUser(@RequestParam("keyword") String keyword) {
+
+        List<User> users = userService.searchUser(keyword);
+        return ResponseEntity.ok(users);
+    }
+
+    // ソート条件の指定にも対応できるためのメソッド（現状はソート指定は行わない）
+    private Sort getSort() {
+        return Sort.by(Sort.Direction.DESC, "createdUt");
+    }
+
 
     /**
      * ユーザプロフィール情報を更新します。

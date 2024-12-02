@@ -3,6 +3,7 @@ import Cropper from "react-easy-crop";
 import { useNavigate } from "react-router-dom";
 import config from "../config/properties";
 import { blogCategories } from "../constants/enum";
+import { convertHEICtoJpeg } from "../util/convertJpeg";
 import { getCroppedImg } from "../util/cropImageToCanvas";
 import { getCodeByDescription } from "../util/enumUtil";
 import fetchWithAuth from "../util/fetchUtil";
@@ -46,8 +47,8 @@ export default function BlogEditor({ targetBlogId }) {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  // 確認モーダル表示状態
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // 確認モーダルタイプ
+  const [modalType, setModalType] = useState(null);
   // ブログタイトル
   const [title, setTitle] = useState("");
   // タイトル入力エラー状態
@@ -68,6 +69,8 @@ export default function BlogEditor({ targetBlogId }) {
   const [encoreSectionErrors, setEncoreSectionErrors] = useState([]);
   // ブログステータス
   const [blogStatus, setBlogStatus] = useState(null);
+  // 確認モーダル表示メッセージ
+  const [confirmationMessage, setConfirmationMessage] = useState("");
 
   // 関連アーティストの管理
   // 関連アーティストリスト
@@ -172,16 +175,23 @@ export default function BlogEditor({ targetBlogId }) {
   }, [targetBlogId]);
 
   // ファイル選択時の処理
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
       return;
     }
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      setSelectedImage(reader.result);
-    };
+    try {
+      const convertedFile = await convertHEICtoJpeg(file);
+
+      // FileReaderで読み込み
+      const reader = new FileReader();
+      reader.readAsDataURL(convertedFile);
+      reader.onload = () => {
+        setSelectedImage(reader.result);
+      };
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
@@ -253,20 +263,25 @@ export default function BlogEditor({ targetBlogId }) {
   // 「閉じる」ボタン押下時の処理
   const handleCloseClick = () => {
     // 確認モーダルを開く
-    setIsModalOpen(true);
+    setModalType("CLOSE");
+    setConfirmationMessage("入力内容が破棄されますがよろしいですか？");
   };
 
   // 「OK」ボタン押下時
-  const handleConfirm = () => {
+  const handleConfirmClose = () => {
     // 確認モーダルを閉じ、ダッシュボード画面に遷移
-    setIsModalOpen(false);
+    setModalType(null);
+    if (targetBlogId) {
+      navigate(`/blog/${targetBlogId}`);
+      return;
+    }
     navigate("/dashboard");
   };
 
   // 「キャンセル」ボタン押下時
   const handleCancel = () => {
     // 確認モーダルを閉じる
-    setIsModalOpen(false);
+    setModalType(null);
   };
 
   // タイトル入力時の処理
@@ -473,11 +488,7 @@ export default function BlogEditor({ targetBlogId }) {
    */
   const callSaveAPI = async (isDraft = false) => {
     const editor = editorRef.current;
-    if (editor) {
-      const contentJSON = editor.getJSON();
-      console.log("保存するデータ: ", contentJSON);
-      console.log(contentJSON);
-    } else {
+    if (!editor) {
       console.log("contentの読み込みに失敗しました。");
       return;
     }
@@ -518,7 +529,6 @@ export default function BlogEditor({ targetBlogId }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("ブログが正常に保存されました: ", data);
         // 保存成功後閲覧画面に遷移する
         handleSuccessToast("ブログが保存されました");
         navigate(`/blog/${data.id}`);
@@ -538,7 +548,6 @@ export default function BlogEditor({ targetBlogId }) {
       console.log("入力内容が不正です。");
       return;
     }
-    console.log("下書き保存のためAPIを呼び出します");
     callSaveAPI(true);
   };
 
@@ -565,7 +574,6 @@ export default function BlogEditor({ targetBlogId }) {
       return;
     }
 
-    console.log("保存処理のためのAPIを呼び出します。");
     callSaveAPI();
   };
   // エラーが発生した場合の処理
@@ -583,40 +591,131 @@ export default function BlogEditor({ targetBlogId }) {
     );
   }
 
+  // 公開停止ボタン押下時
+  const handleUnpublish = () => {
+    setModalType("UNPUBLISH");
+    setConfirmationMessage(
+      "入力内容が破棄されブログは非公開となりますがよろしいですか？"
+    );
+  };
+
+  // 公開停止処理
+  const handleConfirmUnpublish = async () => {
+    try {
+      startLoading();
+      // API呼び出し
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/unpublish/${targetBlogId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (response.ok) {
+        handleSuccessToast("ブログを非公開に変更しました。");
+        navigate(`/blog/${targetBlogId}`);
+        return;
+      } else {
+        console.error("非公開処理に失敗しました");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+    stopLoading();
+  };
+  // 公開停止ボタン押下時
+  const handleDelete = () => {
+    setModalType("DELETE");
+    setConfirmationMessage("完全に削除されますがよろしいですか？");
+  };
+
+  // 削除処理
+  const handleCofirmDelete = async () => {
+    try {
+      startLoading();
+      // API呼び出し
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/delete/${targetBlogId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (response.ok) {
+        handleSuccessToast("ブログを削除しました。");
+        navigate(`/user/profile`);
+        return;
+      } else {
+        console.error("削除処理に失敗しました");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+    stopLoading();
+  };
+
   return (
     <>
       {/* ボタン群 */}
-      <div className="flex justify-between mb-12">
+      <div className="mb-12">
         {/* 閉じるボタン (左寄せ) */}
-        <button
-          className="bg-white text-black border border-gray-300 py-2 px-4 rounded"
-          onClick={handleCloseClick}
-        >
-          閉じる
-        </button>
-
-        {/* 下書き保存ボタンと公開ボタン (右寄せ) */}
-        <div className="flex space-x-4">
-          {/* 新規作成または下書きを編集する場合下書き保存ボタンを表示する */}
-          {(!blogStatus || blogStatus === "DRAFT") && (
-            <button
-              className="bg-white text-black border border-gray-300 py-2 px-4 rounded"
-              onClick={() => {
-                handleDraftSave();
-              }}
-            >
-              下書き保存
-            </button>
-          )}
+        <div className="mb-4">
           <button
             className="bg-white text-black border border-gray-300 py-2 px-4 rounded"
-            onClick={() => {
-              handleSave();
-            }}
+            onClick={handleCloseClick}
           >
-            {/* 公開済みのブログを編集する場合ボタン名を「更新」にする */}
-            {blogStatus && blogStatus !== "DRAFT" ? "更新" : "公開"}
+            閉じる
           </button>
+        </div>
+
+        <div className="flex justify-end mb-12">
+          {/* 下書き保存ボタンと公開ボタン (右寄せ) */}
+          <div className="flex space-x-4">
+            {/* 新規作成または下書きを編集する場合下書き保存ボタンを表示する */}
+            {(!blogStatus ||
+              blogStatus === "DRAFT" ||
+              blogStatus === "ARCHIVED") && (
+              <button
+                className="bg-yellow-300 text-black border border-gray-300 py-2 px-4 rounded"
+                onClick={() => {
+                  handleDraftSave();
+                }}
+              >
+                下書き保存
+              </button>
+            )}
+            <button
+              className="bg-green-300 text-black border border-gray-300 py-2 px-4 rounded"
+              onClick={() => {
+                handleSave();
+              }}
+            >
+              {/* 公開済みのブログを編集する場合ボタン名を「更新」にする */}
+              {blogStatus && blogStatus === "PUBLISHED" ? "更新" : "公開"}
+            </button>
+            {/* 公開済みのブログの場合公開停止ボタンを表示する */}
+            {blogStatus && blogStatus === "PUBLISHED" && (
+              <button
+                className="bg-red-300 text-black border border-gray-300 py-2 px-4 rounded"
+                onClick={() => {
+                  handleUnpublish();
+                }}
+              >
+                公開を停止
+              </button>
+            )}
+            {/* 非公開のブログの場合削除ボタンを表示する */}
+            {blogStatus && blogStatus === "ARCHIVED" && (
+              <button
+                className="bg-red-300 text-black border border-gray-300 py-2 px-4 rounded"
+                onClick={() => {
+                  handleDelete();
+                }}
+              >
+                削除
+              </button>
+            )}
+          </div>
         </div>
       </div>
       {/* サムネイル画像追加パート */}
@@ -642,23 +741,26 @@ export default function BlogEditor({ targetBlogId }) {
             </>
           ) : (
             <div
-              className="flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full sm:-ml-12 cursor-pointer"
+              className="flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full sm:-ml-12 cursor-pointer z-10"
               onClick={triggerImageSelect}
             >
               <i className="fa-regular fa-image fa-2x rounded-fulltext-blue-300 items-center"></i>
             </div>
           )}
-
-          {/* アイコンを中央に表示 */}
-          <div
-            className={`absolute inset-0 flex items-center justify-center ${croppedImage || thumbnailUrl ? "cursor-pointer" : ""}`}
-            onClick={
-              croppedImage || thumbnailUrl ? triggerImageSelect : undefined
-            }
-          >
-            <i className="fa-regular fa-image fa-2x text-white"></i>{" "}
-            {/* カメラアイコン */}
-          </div>
+          {(croppedImage || thumbnailUrl) && (
+            <>
+              {/* アイコンを中央に表示 */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center ${croppedImage || thumbnailUrl ? "cursor-pointer" : ""}`}
+                onClick={
+                  croppedImage || thumbnailUrl ? triggerImageSelect : undefined
+                }
+              >
+                <i className="fa-regular fa-image fa-2x text-white"></i>
+                {/* カメラアイコン */}
+              </div>
+            </>
+          )}
         </div>
         {selectedImage && (
           <>
@@ -1011,12 +1113,26 @@ export default function BlogEditor({ targetBlogId }) {
         )}
       </div>
       {/* 確認モーダル */}
-      {isModalOpen && (
+      {modalType && modalType === "CLOSE" ? (
         <ConfirmModal
-          message="入力内容が破棄されますがよろしいですか？"
-          onConfirm={handleConfirm}
+          message={confirmationMessage}
+          onConfirm={handleConfirmClose}
           onCancel={handleCancel}
         />
+      ) : modalType && modalType === "UNPUBLISH" ? (
+        <ConfirmModal
+          message={confirmationMessage}
+          onConfirm={handleConfirmUnpublish}
+          onCancel={handleCancel}
+        />
+      ) : modalType && modalType === "DELETE" ? (
+        <ConfirmModal
+          message={confirmationMessage}
+          onConfirm={handleCofirmDelete}
+          onCancel={handleCancel}
+        />
+      ) : (
+        <></>
       )}
     </>
   );

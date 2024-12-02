@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState } from "react";
-import Cropper from "react-easy-crop";
 import config from "../config/properties";
 import { getCroppedImg } from "../util/cropImageToCanvas";
 import fetchWithAuth from "../util/fetchUtil";
@@ -108,12 +107,8 @@ export default function UserRegistrationModal({
           method: "GET",
         }
       );
-      console.log(spotifyTokenResponse);
       const responseData = await spotifyTokenResponse.json();
-      console.log(responseData);
       const spotifyAccessToken = responseData.accessToken;
-
-      console.log(spotifyAccessToken);
 
       const response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
@@ -206,7 +201,6 @@ export default function UserRegistrationModal({
 
       if (response.ok) {
         const updatedUser = await response.json();
-        console.log("ユーザ情報が更新されました:", updatedUser);
         onClose();
         setUserInfo(updatedUser);
         handleSuccessToast("ユーザ情報が登録されました");
@@ -244,13 +238,14 @@ export default function UserRegistrationModal({
               />
             </div>
 
-            <div className="mb-4">
+            {/* 初回ログイン時のプロフィール画像登録は実施しない */}
+            {/* <div className="mb-4">
               <label className="block text-sm font-bold mb-2 font-roboto">
                 プロフィール画像
               </label>
               <div className="block items-center">
-                {/* input要素と切り取られた画像を横並びに配置 */}
-                <input
+                {/* input要素と切り取られた画像を横並びに配置
+            <input
                   type="file"
                   ref={fileInputRef} // refでinput要素にアクセス
                   onChange={handleProfileImageChange}
@@ -302,7 +297,7 @@ export default function UserRegistrationModal({
                   </div>
                 </>
               )}
-            </div>
+            </div> */}
             <div className="mb-4">
               <label className="block text-sm font-bold mb-2 font-roboto">
                 好きなアーティスト

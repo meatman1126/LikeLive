@@ -186,10 +186,16 @@ export default function BlogViewer({ targetBlogId, showComments }) {
     <div>
       {blogInfo && (
         <>
-          {blogInfo.status === "DRAFT" && (
+          {blogInfo.status === "DRAFT" ? (
             <p className="text-gray-500 -ml-6 -mt-6 underline">
               ※本記事は下書きです。
             </p>
+          ) : blogInfo.status === "ARCHIVED" ? (
+            <p className="text-gray-500 -ml-6 -mt-6 underline">
+              ※本記事は現在非公開です。
+            </p>
+          ) : (
+            <></>
           )}
           {/* タイトルとauthor情報*/}
           <div className="mb-4">

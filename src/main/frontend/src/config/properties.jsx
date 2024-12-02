@@ -1,5 +1,6 @@
 export const appTitle = "LikeLive";
 export const contactInfo = "Xアカウント:@river_tensix";
+export const copyRight = "© 2024 river";
 export const localUri = "http://localhost:8080";
 const dev = {
   apiBaseUrl: "http://localhost:8080", // ローカル開発環境のAPIベースURL

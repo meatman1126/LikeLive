@@ -34,7 +34,6 @@ export default function Sample() {
       );
 
       if (response.ok) {
-        console.log("サムネイル画像が保存されました");
       } else {
         console.error("サムネイル画像の保存に失敗しました");
       }

@@ -36,6 +36,7 @@ public interface UserArtistRepository extends JpaRepository<UserArtist, UserArti
     @Query("SELECT ua.user FROM UserArtist ua WHERE ua.artist.id = :artistId")
     List<User> findUsersByFavoriteArtistId(@Param("artistId") String artistId);
 
+
     /**
      * 共通のアーティストを好きなユーザの中から、フォロー状況を含めて取得します。
      * フォローしていないユーザを上位にし、最大10件を返します。
@@ -50,6 +51,7 @@ public interface UserArtistRepository extends JpaRepository<UserArtist, UserArti
             "JOIN u.userArtists ua " +
             "WHERE ua.artist.id IN :artistIds " +
             "AND u.id <> :userId " +
+            "GROUP BY u.id " +
             "ORDER BY CASE WHEN (SELECT COUNT(f) FROM Follow f WHERE f.follower.id = :userId AND f.followed.id = u.id) > 0 THEN 1 ELSE 0 END ASC")
     List<DashboardUserRepositoryDto> findRecommendedUsersWithFollowStatus(
             @Param("artistIds") List<String> artistIds,

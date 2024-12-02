@@ -51,7 +51,6 @@ const TiptapEditor = forwardRef((props, ref) => {
       }),
     ],
     // コンテンツが指定された場合それを読み込む、未指定の場合は空
-    // content: props.content ? props.content : "",
     content: "",
     onUpdate: ({ editor }) => {
       // カーソルが移動したらボタンの位置を更新
@@ -88,7 +87,6 @@ const TiptapEditor = forwardRef((props, ref) => {
     {
       label: "画像",
       onClick: () => {
-        console.log("ボタン押下なう");
         fileInputRef.current.click();
       },
       icon: <Icons.ImageIcon />,
@@ -99,7 +97,10 @@ const TiptapEditor = forwardRef((props, ref) => {
   // 挿入ボタンのメニュー表示有無
   const [openInsertMenu, setOpenInsertMenu] = useState(false);
   // 挿入ボタンの位置
-  const [insertButtonPosition, setInsertButtonPosition] = useState({ top: 0 });
+  const [insertButtonPosition, setInsertButtonPosition] = useState({
+    top: 0,
+    left: 0,
+  });
   // 挿入ボタンの位置をカーソルに合わせて移動する処理
   const updateInsertButtonPosition = (editor) => {
     const { from } = editor.state.selection;
@@ -113,8 +114,8 @@ const TiptapEditor = forwardRef((props, ref) => {
     // エディタ要素に対する相対的な位置を計算
     const relativeTop = coords.top - editorRect.top;
 
-    // ボタンをカーソルがある行の左端に配置
-    setInsertButtonPosition({ top: relativeTop });
+    // ボタンをカーソルがある行の左端に配置(微調整は固定値で実施)
+    setInsertButtonPosition({ top: relativeTop - 10, left: -20 });
   };
   // エディタに合わせて挿入ボタンの位置を調整する
   useEffect(() => {
@@ -131,7 +132,6 @@ const TiptapEditor = forwardRef((props, ref) => {
   // ファイル選択時の処理
   const handleImageInsert = async (event) => {
     const file = event.target.files[0];
-    console.log(file);
     if (file) {
       // ファイルアップロードAPIを呼び出す
       await callUploadAPI(file);
@@ -154,7 +154,6 @@ const TiptapEditor = forwardRef((props, ref) => {
         }
       );
       const imageUrl = await response.text();
-      console.log(imageUrl);
       const src = `${config.apiBaseUrl}/api/public/files/${imageUrl}`;
 
       // Tiptapエディタに画像のパスを挿入
@@ -196,10 +195,11 @@ const TiptapEditor = forwardRef((props, ref) => {
         className="absolute z-10"
         style={{
           top: insertButtonPosition.top + "px",
+          left: insertButtonPosition.left + "px",
         }}
       >
         <button
-          className="w-10 h-10 menu-button mt-2 rounded-full border border-solid border-gray-300 p-2"
+          className="w-10 h-10 menu-button mr-4 rounded-full border border-solid border-gray-300 p-2"
           onClick={() => setOpenInsertMenu(!openInsertMenu)}
         >
           {openInsertMenu ? "×" : "+"} {/* 挿入ボタン、展開時は×を表示 */}
@@ -235,7 +235,6 @@ const TiptapEditor = forwardRef((props, ref) => {
           accept="image/*"
           ref={fileInputRef}
           onChange={(e) => {
-            console.log("ファイルが選択されました:", e.target.files[0]); // デバッグ用ログ
             handleImageInsert(e);
           }}
           style={{ display: "none" }}
@@ -317,7 +316,7 @@ const TiptapEditor = forwardRef((props, ref) => {
           <Icons.Code />
         </button>
       </BubbleMenu>
-      <div className="p-4 pl-7">
+      <div>
         <EditorContent editor={editor} />
       </div>
     </div>

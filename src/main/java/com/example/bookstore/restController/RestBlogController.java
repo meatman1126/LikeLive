@@ -1,7 +1,6 @@
 package com.example.bookstore.restController;
 
 import com.example.bookstore.dto.form.blog.BlogCountUpdateForm;
-import com.example.bookstore.dto.form.blog.BlogDeleteForm;
 import com.example.bookstore.dto.form.blog.BlogRegistrationForm;
 import com.example.bookstore.dto.form.blog.BlogUpdateForm;
 import com.example.bookstore.dto.view.BlogInfoViewDto;
@@ -113,6 +112,17 @@ public class RestBlogController {
     public ResponseEntity<List<Blog>> getDrafts() {
         List<Blog> draftList = blogService.findDraftBlog(userUtilService.getCurrentUser().getId());
         return ResponseEntity.ok(draftList);
+    }
+
+    /**
+     * ログインユーザが非公開ブログリストを取得します。
+     *
+     * @return ブログ情報（非公開）
+     */
+    @GetMapping("/blog/my-archives")
+    public ResponseEntity<List<Blog>> getArchives() {
+        List<Blog> archiveList = blogService.findArchiveBlog(userUtilService.getCurrentUser().getId());
+        return ResponseEntity.ok(archiveList);
     }
 
 
@@ -229,14 +239,31 @@ public class RestBlogController {
     }
 
     /**
+     * ブログを非公開にします。
+     *
+     * @param blogId 非公開にするブログID
+     * @return 成功メッセージ
+     */
+    @PostMapping("/blog/unpublish/{blogId}")
+    public ResponseEntity<String> unpublishBlog(@PathVariable Long blogId) {
+        blogService.unpublishBlog(blogId, userUtilService.getCurrentUserId());
+        return ResponseEntity.ok("ブログが非公開になりました。");
+    }
+
+    /**
      * ブログ情報を削除します。
      *
-     * @param form 削除対象のブログ情報
+     * @param blogId 削除対象のブログid
      * @return ブログの削除処理の結果
      */
-    @PostMapping("/blog/delete")
-    public ResponseEntity<Blog> deleteBlog(@RequestBody BlogDeleteForm form) {
-        blogService.deleteBlog(form.getId());
+    @PostMapping("/blog/delete/{blogId}")
+    public ResponseEntity<Blog> deleteBlog(@PathVariable Long blogId) {
+        try {
+            blogService.deleteBlog(blogId);
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok().build();
 
     }

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -83,4 +84,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
             " (SELECT DISTINCT b FROM Blog b WHERE b.author.id = :userId AND b.isDeleted = false)) " +
             "FROM User u WHERE u.id = :userId")
     ProfileRepositoryDto findUserProfileWithBlogsAndArtists(@Param("userId") Long userId);
+
+//    @Query("SELECT DISTINCT u FROM User u " +
+//            "LEFT JOIN u.userArtists ua " +
+//            "LEFT JOIN ua.artist a " +
+//            "WHERE u.displayName LIKE %:keyword% " +
+//            "OR a.name LIKE %:keyword%")
+//    List<User> searchUser(@Param("keyword") String keyword, @Param("currentUserId") String currentUserId);
+
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN u.userArtists ua " +
+            "LEFT JOIN ua.artist a " +
+            "WHERE (u.displayName LIKE %:keyword% OR a.name LIKE %:keyword%) " +
+            "AND u.id != :currentUserId")
+    List<User> searchUser(@Param("keyword") String keyword, @Param("currentUserId") String currentUserId);
 }

@@ -39,9 +39,6 @@ export default function FollowListModal({
   };
 
   const clearFollow = async (userInfo) => {
-    console.log("こいつのフォロー解除します。");
-    console.log(userInfo);
-
     try {
       // APIを呼び出してフォロー解除を実行する
       const response = await fetchWithAuth(
@@ -52,8 +49,6 @@ export default function FollowListModal({
       );
 
       if (response.ok) {
-        console.log("フォロー解除に成功しました。");
-
         // フォロー解除が成功したら、usersの状態を更新する
         setUsersInfo((prevUsersInfo) =>
           prevUsersInfo.map(
@@ -73,8 +68,6 @@ export default function FollowListModal({
   };
 
   const follow = async (userInfo) => {
-    console.log("こいつフォローします。");
-    console.log(userInfo);
     try {
       // APIを呼び出してフォローを実行する
       const response = await fetchWithAuth(
@@ -85,8 +78,6 @@ export default function FollowListModal({
       );
 
       if (response.ok) {
-        console.log("フォローに成功しました。");
-
         // フォローが成功したら、usersの状態を更新する
         setUsersInfo((prevUsersInfo) =>
           prevUsersInfo.map(
@@ -137,21 +128,21 @@ export default function FollowListModal({
                 className="flex items-center space-x-3 cursor-pointer"
                 onClick={() => handleNavigate(userInfo)}
               >
-                <img
-                  src={`${config.apiBaseUrl}/api/public/files/${userInfo.user.profileImageUrl}`}
-                  alt={`Profile of ${userInfo.user.displayName}`}
-                  className="w-10 h-10 rounded-full"
-                />
+                {userInfo.user.profileImageUrl ? (
+                  <img
+                    src={`${config.apiBaseUrl}/api/public/files/${userInfo.user.profileImageUrl}`}
+                    alt={`Profile of ${userInfo.user.displayName}`}
+                    className="w-10 h-10 rounded-full"
+                  />
+                ) : (
+                  <i className="rouded-full fas fa-user fa-2x text-blue-300 mr-4"></i>
+                )}
                 <p className="font-roboto">{userInfo.user.displayName}</p>
               </div>
               <p className="text-sm font-crimson-text text-right pr-3">
                 {userInfo.isFollowing ? (
                   <>
-                    {isOthersInfo ? (
-                      <button className="cursor-default pointer-events-none bg-white text-black border border-gray-300 rounded-full p-1 px-2 text-xs">
-                        フォロー中
-                      </button>
-                    ) : (
+                    {!isOthersInfo && (
                       <button
                         className="bg-white text-black border border-gray-300 rounded-full p-1 px-2 text-xs"
                         onClick={() => clearFollow(userInfo)}
@@ -162,11 +153,7 @@ export default function FollowListModal({
                   </>
                 ) : (
                   <>
-                    {isOthersInfo ? (
-                      <button className="cursor-default pointer-events-none bg-blue-500 text-white rounded-full p-1 px-2 text-xs">
-                        フォローする
-                      </button>
-                    ) : (
+                    {!isOthersInfo && (
                       <button
                         className="bg-blue-500 text-white rounded-full p-1 px-2 text-xs"
                         onClick={() => follow(userInfo)}

@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -151,6 +152,16 @@ public class BlogService {
         return blogRepository.findDraftBlogsByUserId(userId);
     }
 
+    /**
+     * 指定されたユーザの非公開状態のブログ情報を取得します。
+     *
+     * @param userId ユーザID
+     * @return ブログ情報
+     */
+    public List<Blog> findArchiveBlog(Long userId) {
+        return blogRepository.findArchiveBlogsByUserId(userId);
+    }
+
     public List<DashboardBlogViewDto> findInterestBlogs(Long userId) {
         List<DashboardBlogRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId, BlogStatus.PUBLISHED, PageRequest.of(0, 10));
         return DashboardBlogViewDto.toViewDto(repositoryDtoList);
@@ -209,7 +220,7 @@ public class BlogService {
         boolean isCreateNotification = false;
         Blog beforeUpdateBlog = blogRepository.findById(blogId).orElseThrow();
         // 更新対象のブログの著者が他ユーザである場合エラー
-        if (beforeUpdateBlog.getAuthor().getId() != userUtilService.getCurrentUser().getId()) {
+        if (!Objects.equals(beforeUpdateBlog.getAuthor().getId(), userUtilService.getCurrentUser().getId())) {
             throw new IllegalStateException("他ユーザのブログを編集することはできません");
         }
         // 下書き状態のブログを公開する場合はブログ作成通知を登録する
@@ -305,14 +316,39 @@ public class BlogService {
     }
 
     /**
+     * ブログを非公開にします。
+     *
+     * @param blogId    ブログID
+     * @param updatedBy 更新者（ユーザID）
+     * @throws IllegalArgumentException 指定されたブログが見つからない場合
+     */
+    @Transactional
+    public void unpublishBlog(Long blogId, String updatedBy) {
+        Blog targetBlog = blogRepository.findById(blogId).orElseThrow();
+        // 更新対象のブログの著者が他ユーザである場合エラー
+        if (!Objects.equals(targetBlog.getAuthor().getId(), userUtilService.getCurrentUser().getId())) {
+            throw new IllegalStateException("他ユーザのブログを編集することはできません");
+        }
+
+        int updatedRows = blogRepository.unpublishBlog(blogId, updatedBy);
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("指定されたブログが見つかりません: ID=" + blogId);
+        }
+    }
+
+    /**
      * ブログ情報を削除します。
      *
      * @param blogId 削除対象のブログID
      */
     @Transactional
     public void deleteBlog(Long blogId) {
+        Blog targetBlog = blogRepository.findById(blogId).orElseThrow();
+        if (!targetBlog.getAuthor().equals(userUtilService.getCurrentUser())) {
+            throw new IllegalStateException();
+        }
         // DBのデータを削除
-        blogRepository.delete(blogId, true, userUtilService.getCurrentUser().getId().toString());
+        blogRepository.delete(blogId, userUtilService.getCurrentUser().getId().toString());
         // Elasticsearchのインデックス削除
 //        blogSearchRepository.deleteById(blogId);
         // 関連する未読通知の削除

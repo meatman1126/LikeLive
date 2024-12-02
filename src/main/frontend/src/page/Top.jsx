@@ -51,8 +51,6 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
               Date.now() + data.expires_in * 1000
             );
 
-            console.log("ログイン成功:", data);
-
             // 認証成功後、/login/after API を呼び出してユーザ情報を取得または登録
             fetchWithAuth(`${config.apiBaseUrl}/api/login/after`, {
               method: "POST",
@@ -61,7 +59,6 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
                 return response.json();
               })
               .then((data) => {
-                console.log("ログインユーザ情報:", data);
                 localStorage.setItem("ll_userId", data.id);
                 // 必要に応じてユーザ情報を保存したり、状態を更新する処理
                 if (data.updatedBy !== "System") {
@@ -132,7 +129,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
           {/* 左上のタイトル要素 */}
           <div className="absolute top-5 left-5 text-white pt-24">
             <h1 className="text-6xl font-bold">LikeLive</h1>
-            <h1 className="text-6xl font-bold">「好きなもの」を語る場所</h1>
+            <h1 className="text-5xl font-bold">「好きなもの」を語る場所</h1>
             <h5 className="mt-4 text-3xl pt-10 before:content-['•'] before:mr-2">
               アプリの役割
             </h5>
@@ -148,7 +145,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
           {!isAuthenticated && (
             <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2">
               <button
-                className="px-6 py-3 bg-teal-500 text-white rounded-full shadow-lg hover:bg-teal-600"
+                className="px-5 py-3 bg-teal-500 text-white rounded-full shadow-lg hover:bg-teal-600"
                 onClick={() => login()}
               >
                 Google連携で始める
@@ -205,7 +202,7 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
         <section className="main-content text-white py-10 border-b border-b-white">
           {/* 見出し（左寄せ） */}
           <h2 className="text-4xl mb-5 pl-2 text-left font-bold">
-            つながりを作ろう
+            自己満足で繋がる
           </h2>
 
           {/* 横に2等分のコンテンツ（画像左、説明右） */}
@@ -221,10 +218,9 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
 
             {/* 説明部分（右側） */}
             <div className="w-full md:w-1/2 text-left md:pl-8">
-              <p className="text-lg mb-3">ユーザーを繋げる楽しさ</p>
+              <p className="text-lg mb-3">オタク会話が通じる楽しさ</p>
               <p className="text-lg">
-                LikeLiveは、音楽アーティスト専用のSNSアプリです。アーティストをフォローし、ブログを書いてコミュニケーションを楽しむことができます。
-                コメントやフォロー機能を通じて、他のユーザーと交流し、新しい音楽体験を共有しましょう。
+                LikeLiveは、音楽好きのための専用プラットフォームです。自分が好きな音楽、アーティストについて自由に発言できる場所と共感できるユーザとの交流を提供します。
               </p>
             </div>
           </div>

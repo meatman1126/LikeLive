@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { appTitle, contactInfo } from "../config/properties";
+import { appTitle, contactInfo, copyRight } from "../config/properties";
 export default function Footer() {
   return (
     <footer className="bg-black text-white py-6 border-t-2 border-white">
@@ -13,6 +13,7 @@ export default function Footer() {
         <div className="flex-1 border-l-2 border-white pl-4">
           <h3 className="text-lg font-semibold mb-2">Contact</h3>
           <p>{contactInfo}</p>
+          <p>{copyRight}</p>
         </div>
       </div>
     </footer>

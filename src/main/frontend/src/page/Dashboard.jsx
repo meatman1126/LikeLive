@@ -157,7 +157,7 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
                 <div
                   key={post.id}
                   className="post-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                  onClick={() => (window.location.href = `/blog/${post.id}`)}
+                  onClick={() => navigate(`/blog/${post.id}`)}
                 >
                   {/* サムネイル画像 */}
                   {post.thumbnailUrl ? (
@@ -181,11 +181,15 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
 
                   {/* 著者情報 */}
                   <div className="flex items-center mb-4">
-                    <img
-                      src={`${config.apiBaseUrl}/api/public/files/${post.profileImageUrl}`}
-                      alt={`${post.profileImageUrl}のアイコン`}
-                      className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
-                    />
+                    {post.profileImageUrl ? (
+                      <img
+                        src={`${config.apiBaseUrl}/api/public/files/${post.profileImageUrl}`}
+                        alt={`${post.profileImageUrl}のアイコン`}
+                        className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
+                      />
+                    ) : (
+                      <i className="rouded-full fas fa-user fa-2x text-blue-300 mr-4"></i>
+                    )}
                     <div className="text-base flex justify-between w-full">
                       <p className="font-semibold text-gray-700">
                         {post.authorName}
@@ -225,44 +229,57 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
           <div className="mb-12">
             {recomendedUsers.length === 0 ? (
               <div className="text-center my-8">
-                <p className="text-left sm:text-center text-gray-700 text-lg mb-4">
-                  好きなアーティストを登録して興味の近いユーザを見つけよう
+                <p className="text-left sm:text-center text-gray-700 text-lg">
+                  共通のアーティストが好きなユーザはまだいないみたいです。。
+                </p>
+                <p className="text-left sm:text-center text-gray-700 text-lg mb-6">
+                  興味のあるアーティストを追加してみましょう
                 </p>
                 <button
                   className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600 transition"
                   onClick={() => navigate("/user/profile")}
                 >
-                  登録する
+                  プロフィール設定
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {recomendedUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="user-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/user/${user.id}`)}
-                  >
-                    <div className="flex items-center mb-4">
-                      <img
-                        src={`${config.apiBaseUrl}/api/public/files/${user.profileImageUrl}`}
-                        alt={`${user.profileImageUrl}のアイコン`}
-                        className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
-                      />
-                      <div className="text-base flex justify-between w-full">
-                        <p className="font-semibold text-gray-700">
-                          {user.displayName}
-                        </p>
-                        <span className="text-xs text-gray-500">
-                          {user.isFollow ? "フォロー中" : ""}
-                        </span>
+              <div>
+                <p className="text-left text-gray-700 text-lg mb-6">
+                  共通のアーティストが好きなユーザ
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {recomendedUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="user-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/user/${user.id}`)}
+                    >
+                      <div className="flex items-center mb-4">
+                        {user.profileImageUrl ? (
+                          <img
+                            src={`${config.apiBaseUrl}/api/public/files/${user.profileImageUrl}`}
+                            alt={`${user.profileImageUrl}のアイコン`}
+                            className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
+                          />
+                        ) : (
+                          <i className="rouded-full fas fa-user fa-2x text-blue-300 mr-4"></i>
+                        )}
+                        <div className="text-base flex justify-between w-full">
+                          <p className="font-semibold text-gray-700">
+                            {user.displayName}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {user.isFollow ? "フォロー中" : ""}
+                          </span>
+                        </div>
                       </div>
+                      <p className="text-gray-500 text-sm">
+                        {user.selfIntroduction}
+                      </p>
                     </div>
-                    <p className="text-gray-500 text-sm">
-                      {user.selfIntroduction}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

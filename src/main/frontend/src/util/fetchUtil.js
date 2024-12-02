@@ -21,7 +21,6 @@ const refreshAccessToken = async () => {
   }
 
   const data = await response.json();
-  console.log(data);
   const newAccessToken = data.access_token;
 
   // 新しいアクセストークンを保存
@@ -44,7 +43,6 @@ const fetchWithAuth = async (url, options = {}) => {
     try {
       // 有効期限が切れているのでリフレッシュトークンでトークンを更新
       token = await refreshAccessToken();
-      console.log("アクセストークンを更新しました");
     } catch (error) {
       console.error("トークンの更新に失敗しました:", error);
       throw new Error("認証エラー");

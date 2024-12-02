@@ -7,6 +7,7 @@ import FollowListModal from "../component/FollowListModal";
 import Header from "../component/Header";
 import config from "../config/properties";
 import noImage from "../images/no_image.jpeg";
+import { convertHEICtoJpeg } from "../util/convertJpeg";
 import { getCroppedImg } from "../util/cropImageToCanvas";
 import fetchWithAuth from "../util/fetchUtil";
 import { useLoading } from "../util/LoadingContext";
@@ -36,6 +37,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
 
   // 下書きブログ情報を管理
   const [drafts, setDrafts] = useState([]);
+
+  // 非公開ブログ情報を管理
+  const [archives, setArchives] = useState([]);
 
   // 表示されているユーザがフォロー中のユーザリストを管理するstate
   const [followUsers, setFollowUsers] = useState(null);
@@ -69,6 +73,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   // ローディング制御メソッドを取得
   const { startLoading, stopLoading } = useLoading();
 
+  // Headerに渡すプロファイル画像のURLを管理するstate
+  const [headerProfileImage, setHeaderProfileImage] = useState(null);
+
   const handleFollowerLink = async (targetUserId) => {
     try {
       // APIを呼び出してフォロワー一覧を取得
@@ -96,7 +103,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   };
 
   const clearFollowers = (isFollowUpdate) => {
-    console.log(isFollowUpdate);
     if (isFollowUpdate) {
       fetchUserProfile();
     }
@@ -130,8 +136,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   };
 
   const clearFollowUsers = (isFollowUpdate) => {
-    console.log(isFollowUpdate);
-
     if (isFollowUpdate) {
       fetchUserProfile();
     }
@@ -142,7 +146,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   useEffect(() => {
     if (targetUserId && targetUserId !== localStorage.getItem("ll_userId")) {
       setIsOthersPage(true);
+      // 他ユーザのページでは下書き、非公開のブログは表示しない
       setDrafts([]);
+      setArchives([]);
       fetchOthersProfile(targetUserId);
     } else {
       setIsOthersPage(false);
@@ -187,6 +193,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
         console.error("Failed to fetch profile");
       }
       fetchDrafts();
+      fetchArchives();
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
@@ -195,6 +202,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     }
   };
 
+  /**
+   * ログインユーザの下書きブログ情報を取得します
+   */
   const fetchDrafts = async () => {
     try {
       const response = await fetchWithAuth(
@@ -215,6 +225,29 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       console.error("エラーが発生しました:", error);
     }
   };
+  /**
+   * ログインユーザの非公開ブログ情報を取得します
+   */
+  const fetchArchives = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `${config.apiBaseUrl}/api/blog/my-archives`,
+        {
+          method: "GET",
+        }
+      );
+
+      // レスポンスのステータス確認
+      if (response.ok) {
+        const data = await response.json();
+        setArchives(data); // APIの結果をdraftsにセット
+      } else {
+        console.error("非公開ブログの取得に失敗しました");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
 
   // 編集モードに切り替えた時の処理
   const handleEdit = () => {
@@ -224,6 +257,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   const handleCancel = () => {
     setArtistSuggestions([]);
     setSearchArtistName("");
+    setCroppedImage(null);
     setProfile(initialProfile);
     setIsEditing(false);
   };
@@ -269,6 +303,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       if (response.ok) {
         const updatedProfile = await response.json();
         setProfile(updatedProfile); // プロフィールを更新
+        setHeaderProfileImage(updatedProfile.profileImageUrl);
         setArtistSuggestions([]);
         setSearchArtistName("");
         handleSuccessToast("プロフィールが保存されました");
@@ -288,13 +323,15 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleProfileImageChange = (e) => {
+  const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) {
       return;
     }
+    const convertedFile = await convertHEICtoJpeg(file);
+
     const reader = new FileReader();
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(convertedFile);
     reader.onload = () => {
       setSelectedImage(reader.result);
     };
@@ -339,12 +376,8 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           method: "GET",
         }
       );
-      console.log(spotifyTokenResponse);
       const responseData = await spotifyTokenResponse.json();
-      console.log(responseData);
       const spotifyAccessToken = responseData.accessToken;
-
-      console.log(spotifyAccessToken);
 
       const response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
@@ -394,7 +427,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   };
 
   const handleFollow = async (targetUserId) => {
-    console.log(`${targetUserId}をフォローします。`);
     try {
       const response = await fetchWithAuth(
         `${config.apiBaseUrl}/api/follow/${targetUserId}`, // APIのエンドポイント
@@ -404,7 +436,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       );
 
       if (response.ok) {
-        console.log(`${targetUserId}を正常にフォローしました。`);
         // profileのisFollowをtrueに更新
         setProfile((prevProfile) => ({
           ...prevProfile, // 他のプロパティを保持
@@ -419,7 +450,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   };
 
   const handleClearFollow = async (targetUserId) => {
-    console.log(`${targetUserId}をフォロー解除します。`);
     try {
       const response = await fetchWithAuth(
         `${config.apiBaseUrl}/api/follow/cancel/${targetUserId}`, // APIのエンドポイント
@@ -429,7 +459,6 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       );
 
       if (response.ok) {
-        console.log(`${targetUserId}のフォローを正常に解除しました。`);
         // profileのisFollowをfalseに更新
         setProfile((prevProfile) => ({
           ...prevProfile, // 他のプロパティを保持
@@ -459,6 +488,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
         isAuthenticated={isAuthenticated}
         setIsAuthenticated={setIsAuthenticated}
         // userInfo={profile} // 取得したuserInfoをHeaderに渡す
+        profileImage={headerProfileImage}
       />
 
       <div className="container mx-auto p-4 font-sans">
@@ -474,16 +504,22 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                     <img
                       src={croppedImage}
                       alt="選択されたプロフィール画像"
-                      className={`w-full h-full rounded-full object-cover ${isEditing ? "filter grayscale" : ""}`} // isEditingがtrueならグレーにする
+                      className={`w-full h-full rounded-full object-cover ${
+                        isEditing ? "filter grayscale" : ""
+                      }`} // isEditingがtrueならグレーにする
                     />
                   ) : profile.profileImageUrl ? (
                     <img
                       src={`${config.apiBaseUrl}/api/public/files/${profile.profileImageUrl}`}
                       alt="ユーザーのプロフィール画像"
-                      className={`w-full h-full rounded-full object-cover ${isEditing ? "filter grayscale" : ""}`} // isEditingがtrueならグレーにする
+                      className={`w-full h-full rounded-full object-cover ${
+                        isEditing ? "filter grayscale" : ""
+                      }`} // isEditingがtrueならグレーにする
                     />
                   ) : (
-                    <i className="fas fa-user fa-5x text-blue-300 w-full h-full rounded-full"></i>
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-full">
+                      <i className="fas fa-user fa-5x text-blue-300"></i>
+                    </div>
                   )}
 
                   {/* アイコンを中央に表示 (isEditing が true の場合のみ表示) */}
@@ -493,7 +529,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                       {/* カメラアイコン */}
                     </div>
                   )}
-                </div>{" "}
+                </div>
                 {selectedImage && (
                   <>
                     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
@@ -539,7 +575,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                     className="w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6"
                   />
                 ) : (
-                  <i className="fas fa-user fa-5x text-blue-300 w-32 h-32 rounded-full pl-3 mb-4 md:mb-0 md:mr-6"></i>
+                  <div className="w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6 flex items-center justify-center bg-gray-200">
+                    <i className="fas fa-user fa-5x text-blue-300"></i>
+                  </div>
                 )}
               </>
             )}
@@ -673,6 +711,27 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                         onClick={() => navigate(`/blog/edit/${draft.id}`)}
                       >
                         <p className="font-medium">{draft.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {archives.length > 0 && !isEditing && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold mb-2">
+                    非公開状態のブログ一覧
+                  </h2>
+
+                  {/* 非公開記事一覧のグリッドレイアウト */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {archives.map((archive) => (
+                      <div
+                        key={archive.id}
+                        className="bg-gray-100 p-2 rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                        onClick={() => navigate(`/blog/edit/${archive.id}`)}
+                      >
+                        <p className="font-medium">{archive.title}</p>
                       </div>
                     ))}
                   </div>

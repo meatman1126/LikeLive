@@ -31,16 +31,6 @@ export default function CommentList({
     setComments(initialComments);
   }, [initialComments]);
 
-  // ログを出力する関数（デバッグ用）
-  const outputLog = () => {
-    console.log(initialComments);
-    console.log(comments);
-    console.log(expandedCommentIds);
-    console.log(newComment);
-    console.log(replyTexts);
-    console.log(showReplyInput);
-  };
-
   const toggleReplies = async (commentId) => {
     // すでに返信が設定されているかを確認
     const comment = comments.find((c) => c.id === commentId);
@@ -228,8 +218,8 @@ export default function CommentList({
       <div
         key={comment.id} // コメントのユニークIDをキーとして使用
         className={`flex gap-4 p-4 ${
-          isReply ? "ml-12" : "border-b border-gray-200"
-        }`} // 返信の場合は左にマージンを付ける
+          !isReply ? "border-b border-gray-200" : "" // 親コメント毎に区切る
+        }`}
         onClick={() => !isReply && toggleReplyInput(comment.id)} // 返信ではない場合、クリックで返信入力欄の表示を切り替え
       >
         <img

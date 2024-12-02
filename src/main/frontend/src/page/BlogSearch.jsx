@@ -184,7 +184,7 @@ export default function BlogSearch({ isAuthenticated, setIsAuthenticated }) {
               className={`w-full pl-10 pr-4 py-2 border rounded-lg font-noto-sans ${
                 errorMessage ? "border-red-500" : ""
               }`} // エラーメッセージがある場合赤枠を適用
-              placeholder="アーティスト名、ユーザ名で検索"
+              placeholder="キーワードで検索"
               value={searchTerm}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}

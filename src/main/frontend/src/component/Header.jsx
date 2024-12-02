@@ -12,7 +12,8 @@ function MainComponent({
   onLogin,
   isAuthenticated,
   setIsAuthenticated,
-  userInfo: initialUserInfo,
+  // userInfo: initialUserInfo,
+  profileImage,
 }) {
   const navigate = useNavigate();
   // ブログページ内でのメニューを使用した画面遷移はメニューが開きっぱなしになる問題に対処するメソッド
@@ -25,11 +26,15 @@ function MainComponent({
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
+  const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
+  const toggleBlogModal = () => {
+    setIsBlogModalOpen(!isBlogModalOpen);
   };
-  const [userInfo, setUserInfo] = useState(initialUserInfo); // userInfoの状態管理
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const toggleUserModal = () => {
+    setIsUserModalOpen(!isUserModalOpen);
+  };
+  const [userInfo, setUserInfo] = useState(null); // userInfoの状態管理
   // API からユーザ情報を取得する処理を追加
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -52,13 +57,12 @@ function MainComponent({
     };
 
     // userInfo が未指定かつ認証済みの場合にAPIを呼び出す
-    if (!initialUserInfo && isAuthenticated) {
+    if (isAuthenticated) {
       fetchUserInfo();
     }
-  }, [initialUserInfo, isAuthenticated]);
+  }, [isAuthenticated]);
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  // TODO通知データとユーザデータ（画像など）はヘッダー描画時にAPIで取りに行く動きにする必要がある。
   const [notifications, setNotifications] = useState([]);
   // 通知データの取得
   useEffect(() => {
@@ -130,7 +134,10 @@ function MainComponent({
   return (
     <div>
       <header className="bg-black text-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-b-white">
-        <div className="flex items-center">
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <img src={icon} alt="会社のロゴ" className="w-10 h-10 mr-3" />
           <h5 className="text-sm font-bold font-sans">
             {isAuthenticated ? "LikeLive" : "音楽好きのためのSNS"}
@@ -143,7 +150,7 @@ function MainComponent({
 
           {/* 通知アイコン (認証済みの場合のみ) */}
           {isAuthenticated && (
-            <div className="relative">
+            <div>
               <button
                 className="px-2 py-1 rounded-3xl bg-yellow-300"
                 onClick={toggleNotificationMenu}
@@ -170,7 +177,19 @@ function MainComponent({
           {/* ユーザアイコンの表示 (認証済みの場合のみ) */}
           {isAuthenticated && (
             <>
-              {userInfo && userInfo.profileImageUrl ? (
+              {profileImage ? (
+                <button
+                  className="px-2 py-1 w-13 h-13 rounded-full"
+                  onClick={() => navigate("/user/profile")}
+                >
+                  {/* 動的な画像の呼び出し方はAPIを呼ぶ方針とします。 */}
+                  <img
+                    src={`${config.apiBaseUrl}/api/public/files/${profileImage}`}
+                    alt="Profile Image"
+                    className="w-9 h-9 rounded-full"
+                  />
+                </button>
+              ) : userInfo && userInfo.profileImageUrl ? (
                 <button
                   className="px-2 py-1 w-13 h-13 rounded-full"
                   onClick={() => navigate("/user/profile")}
@@ -227,7 +246,7 @@ function MainComponent({
         <nav
           className={
             isMenuOpen
-              ? "z-10 text-left fixed right-0 top-0 w-5/12 h-screen flex flex-col justify-start ease-linear duration-300 bg-green-50"
+              ? "z-10 text-left fixed right-0 top-0 sm:w-5/12 w-7/12 h-screen flex flex-col justify-start ease-linear duration-300 bg-green-50"
               : "fixed right-[-100%] ease-linear duration-300"
           }
         >
@@ -241,14 +260,14 @@ function MainComponent({
             </li>
             <li
               className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-              onClick={toggleModal}
+              onClick={toggleBlogModal}
             >
               <span className="py-2 inline-block">ブログ</span>
               <span className="text-blue-500 ml-auto mr-2 text-lg">
-                {isModalOpen ? "-" : "+"}
+                {isBlogModalOpen ? "-" : "+"}
               </span>
             </li>
-            {isModalOpen && (
+            {isBlogModalOpen && (
               <ul className="pl-4 bg-gray-50">
                 <li
                   className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
@@ -268,31 +287,39 @@ function MainComponent({
                     {">"}
                   </span>
                 </li>
-                {/* <li
-                  className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-                  onClick={() => navigate("/blog/category3")}
-                >
-                  <span className="py-2 inline-block">マイブログ</span>
-                  <span className="text-blue-500 ml-auto mr-2 text-lg">
-                    {">"}
-                  </span>
-                </li> */}
               </ul>
             )}
             <li
               className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-              onClick={() => navigatePage("/user/profile")}
+              onClick={toggleUserModal}
             >
               <span className="py-2 inline-block">ユーザ管理</span>
-              <span className="text-blue-500 ml-auto mr-2 text-lg">{">"}</span>
+              <span className="text-blue-500 ml-auto mr-2 text-lg">
+                {isUserModalOpen ? "-" : "+"}
+              </span>
             </li>
-            {/* <li
-              className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
-              onClick={() => navigate("/setting")}
-            >
-              <span className="py-2 inline-block">SETTING</span>
-              <span className="text-blue-500 ml-auto mr-2 text-lg">{">"}</span>
-            </li> */}
+            {isUserModalOpen && (
+              <ul className="pl-4 bg-gray-50">
+                <li
+                  className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
+                  onClick={() => navigatePage("/user/profile")}
+                >
+                  <span className="py-2 inline-block">プロフィール管理</span>
+                  <span className="text-blue-500 ml-auto mr-2 text-lg">
+                    {">"}
+                  </span>
+                </li>
+                <li
+                  className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"
+                  onClick={() => navigatePage("/user/search")}
+                >
+                  <span className="py-2 inline-block">ユーザを検索する</span>
+                  <span className="text-blue-500 ml-auto mr-2 text-lg">
+                    {">"}
+                  </span>
+                </li>
+              </ul>
+            )}
             {isAuthenticated && (
               <li
                 className="p-2 hover:text-blue-500 cursor-pointer flex justify-between items-center"

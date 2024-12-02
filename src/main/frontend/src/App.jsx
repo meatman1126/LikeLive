@@ -17,8 +17,11 @@ import ProtectedRoute from "./config/ProtectedRouter";
 import Blog from "./page/Blog";
 import BlogSearch from "./page/BlogSearch";
 import Dashboard from "./page/Dashboard";
+import PrivacyPolicy from "./page/PrivacyPolicy";
+import TermsOfService from "./page/TermsOfService";
 import Top from "./page/Top";
 import User from "./page/User";
+import UserSearch from "./page/UserSearch";
 import { LoadingProvider, useLoading } from "./util/LoadingContext";
 
 function AppContent() {
@@ -48,6 +51,8 @@ function AppContent() {
                 />
               }
             />
+            <Route path="/term" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             {/* GoogleOAuth認証成功後の挙動 */}
             <Route
               path="/login/callback"
@@ -155,6 +160,19 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            {/* ユーザ検索画面 */}
+            <Route
+              path="/user/search"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <UserSearch
+                    isAuthenticated={isAuthenticated}
+                    setIsAuthenticated={setIsAuthenticated}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
             {/* 想定していないパスへのリクエストはトップ画面へリダイレクトする */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

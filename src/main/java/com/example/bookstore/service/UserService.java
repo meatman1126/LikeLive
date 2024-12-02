@@ -140,6 +140,16 @@ public class UserService {
     }
 
     /**
+     * キーワードに部分一致するユーザを検索する
+     *
+     * @param keyword 検索キーワード
+     * @return 該当するユーザのリスト
+     */
+    public List<User> searchUser(String keyword) {
+        return userRepository.searchUser(keyword, userUtilService.getCurrentUserId());
+    }
+
+    /**
      * ユーザを新規登録します。
      *
      * @param input Idpに紐づくユーザ情報
