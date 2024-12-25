@@ -13,7 +13,11 @@ import TiptapViewer from "./TiptapViewer";
  *
  * @param {*} targetBlogId 閲覧対象のブログID
  */
-export default function BlogViewer({ targetBlogId, showComments }) {
+export default function BlogViewer({
+  isAuthenticated,
+  targetBlogId,
+  showComments,
+}) {
   // ローディング制御メソッドを取得
   const { startLoading, stopLoading } = useLoading();
   // navigateフック
@@ -44,9 +48,16 @@ export default function BlogViewer({ targetBlogId, showComments }) {
   const fetchBlogContent = async (blogId) => {
     startLoading();
     try {
-      const response = await fetchWithAuth(
-        `${config.apiBaseUrl}/api/blog/${blogId}`
-      );
+      // 認証有無でAPI呼び出し先を切り替える
+      const response = isAuthenticated
+        ? await fetchWithAuth(`${config.apiBaseUrl}/api/blog/${blogId}`)
+        : await fetch(`${config.apiBaseUrl}/api/public/blog/${blogId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
       if (!response.ok) {
         throw new Error("データの取得に失敗しました");
       }
@@ -67,10 +78,21 @@ export default function BlogViewer({ targetBlogId, showComments }) {
   const fetchInitialComments = async (blogId) => {
     startLoading();
     try {
-      const response = await fetchWithAuth(
-        `${config.apiBaseUrl}/api/comment/blog/${blogId}`
-      );
+      // 認証有無でAPI呼び出し先を切り替える
+      const response = isAuthenticated
+        ? await fetchWithAuth(`${config.apiBaseUrl}/api/comment/blog/${blogId}`)
+        : await fetch(
+            `${config.apiBaseUrl}/api/public/comment/blog/${blogId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
       if (!response.ok) {
+        console.log(response);
         throw new Error("データの取得に失敗しました");
       }
       const data = await response.json();
@@ -84,6 +106,7 @@ export default function BlogViewer({ targetBlogId, showComments }) {
     } catch (err) {
       // エラーが発生した場合はエラーメッセージをセット
       setError("対象のコメントデータが見つかりませんでした。");
+      console.error(err);
     } finally {
       stopLoading(); // ローディング停止
     }
@@ -211,7 +234,7 @@ export default function BlogViewer({ targetBlogId, showComments }) {
               </button>
 
               {/* isMyBlogがtrueの場合のみ編集ボタンを表示 */}
-              {isMyBlog && (
+              {isMyBlog && isAuthenticated && (
                 <button
                   className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
                   onClick={() => navigate(`/blog/edit/${blogInfo.id}`)}
@@ -245,13 +268,21 @@ export default function BlogViewer({ targetBlogId, showComments }) {
               {/* 著者情報 */}
               <div
                 className="flex items-center mb-2 sm:mb-0 sm:mr-8 text-left cursor-pointer"
-                onClick={() => navigate(`/user/${blogInfo.author.id}`)}
+                onClick={
+                  isAuthenticated
+                    ? () => navigate(`/user/${blogInfo.author.id}`)
+                    : undefined
+                }
               >
-                <img
-                  src={`${config.apiBaseUrl}/api/public/files/${blogInfo.author.profileImageUrl}`}
-                  alt="プロフィール画像"
-                  className="w-10 h-10 rounded-full mr-2"
-                />
+                {blogInfo.author.profileImageUrl ? (
+                  <img
+                    src={`${config.apiBaseUrl}/api/public/files/${blogInfo.author.profileImageUrl}`}
+                    alt="プロフィール画像"
+                    className="w-10 h-10 rounded-full mr-2"
+                  />
+                ) : (
+                  <i className="fas fa-user fa-2x text-blue-300 mr-2"></i>
+                )}
                 <p className="text-gray-700">{blogInfo.author.displayName}</p>
               </div>
 
@@ -266,6 +297,9 @@ export default function BlogViewer({ targetBlogId, showComments }) {
               <div
                 className="flex items-center text-left cursor-pointer"
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    return;
+                  }
                   if (isLikeBlog) {
                     // いいねを解除する
                     clearLikeBlog(blogInfo.id);
@@ -400,6 +434,7 @@ export default function BlogViewer({ targetBlogId, showComments }) {
             <div id="comment-section">
               {initialComments ? (
                 <CommentList
+                  isAuthenticated={isAuthenticated}
                   initialComments={initialComments}
                   targetBlogId={targetBlogId}
                   showComments={showComments}

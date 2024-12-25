@@ -9,6 +9,7 @@ import fetchWithAuth from "../util/fetchUtil";
  * @returns コメントリストコンポーネント
  */
 export default function CommentList({
+  isAuthenticated,
   initialComments,
   targetBlogId,
   showComments = false,
@@ -51,12 +52,21 @@ export default function CommentList({
 
     // 返信が未設定の場合、APIから返信を取得
     try {
-      const response = await fetchWithAuth(
-        `${config.apiBaseUrl}/api/comment/parent/${commentId}`,
-        {
-          method: "GET",
-        }
-      );
+      // 認証有無でAPI呼び出し先を切り替える
+      const response = isAuthenticated
+        ? await fetchWithAuth(
+            `${config.apiBaseUrl}/api/comment/parent/${commentId}`
+          )
+        : await fetch(
+            `${config.apiBaseUrl}/api/public/comment/parent/${commentId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
       if (!response.ok) {
         throw new Error("Failed to fetch replies");
       }
@@ -220,13 +230,20 @@ export default function CommentList({
         className={`flex gap-4 p-4 ${
           !isReply ? "border-b border-gray-200" : "" // 親コメント毎に区切る
         }`}
-        onClick={() => !isReply && toggleReplyInput(comment.id)} // 返信ではない場合、クリックで返信入力欄の表示を切り替え
+        onClick={() =>
+          isAuthenticated && !isReply && toggleReplyInput(comment.id)
+        } // 返信ではない場合、クリックで返信入力欄の表示を切り替え
       >
-        <img
-          src={`${config.apiBaseUrl}/api/public/files/${comment.author.profileImageUrl}`}
-          alt={`${comment.author.displayName}のプロフィール画像`}
-          className="w-10 h-10 rounded-full object-cover"
-        />
+        {comment.author.profileImageUrl ? (
+          <img
+            src={`${config.apiBaseUrl}/api/public/files/${comment.author.profileImageUrl}`}
+            alt={`${comment.author.displayName}のプロフィール画像`}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          <i className="fas fa-user fa-2x text-blue-300"></i>
+        )}
+
         <div className="flex-1">
           {/* ユーザ名 */}
           <div className="font-roboto text-sm text-gray-700 mb-1">
@@ -294,24 +311,26 @@ export default function CommentList({
     <>
       {/* コメント入力欄 */}
       <div className="w-full mt-16 bg-white rounded-lg shadow-2xl">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              name="new-comment" // 新規コメントの入力欄
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)} // 新規コメントの内容をStateに保存
-              placeholder="コメントを入力..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-            <button
-              onClick={handleNewComment} // コメントを追加する
-              className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              <i className="fas fa-paper-plane"></i> {/* 送信アイコン */}
-            </button>
+        {isAuthenticated && (
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="new-comment" // 新規コメントの入力欄
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)} // 新規コメントの内容をStateに保存
+                placeholder="コメントを入力..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={handleNewComment} // コメントを追加する
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                <i className="fas fa-paper-plane"></i> {/* 送信アイコン */}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         {/* コメントの表示 */}
         {showCommentList ? (
           <>
@@ -337,12 +356,6 @@ export default function CommentList({
           </div>
         )}
       </div>
-      {/* ログ出力ボタン（デバッグ用） */}
-      {/* <div className="mt-10">
-        <button className="rounded" onClick={outputLog}>
-          ログ出力
-        </button>
-      </div> */}
     </>
   );
 }

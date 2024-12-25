@@ -51,6 +51,18 @@ function AppContent() {
                 />
               }
             />
+            {/* ブログ閲覧画面(閲覧は未認証でも許可する) */}
+            <Route
+              path="/blog/:targetBlogId"
+              element={
+                <Blog
+                  isAuthenticated={isAuthenticated}
+                  setIsAuthenticated={setIsAuthenticated}
+                  isEdit={false}
+                />
+              }
+            />
+
             <Route path="/term" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             {/* GoogleOAuth認証成功後の挙動 */}
@@ -91,20 +103,6 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            {/* ブログ閲覧画面 */}
-            <Route
-              path="/blog/:targetBlogId"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Blog
-                    isAuthenticated={isAuthenticated}
-                    setIsAuthenticated={setIsAuthenticated}
-                    isEdit={false}
-                  />
-                </ProtectedRoute>
-              }
-            />
-
             <Route
               path="/blog/search"
               element={

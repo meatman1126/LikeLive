@@ -42,7 +42,11 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
       ) : (
         // 編集モードではない場合は閲覧
         <div className="p-12">
-          <BlogViewer targetBlogId={targetBlogId} showComments={showComments} />
+          <BlogViewer
+            isAuthenticated={isAuthenticated}
+            targetBlogId={targetBlogId}
+            showComments={showComments}
+          />
         </div>
       )}
     </>

@@ -54,6 +54,18 @@ public class RestCommentController {
     }
 
     /**
+     * 指定されたブログに対するコメントを取得します。
+     *
+     * @param blogId ブログID
+     * @return コメントリスト
+     */
+    @GetMapping("/public/comment/blog/{blogId}")
+    public ResponseEntity<List<ParentCommentViewDto>> getPublicCommentsByBlogId(@PathVariable Long blogId) {
+        List<ParentCommentViewDto> comments = commentService.getCommentsByBlogId(blogId);
+        return ResponseEntity.ok(comments);
+    }
+
+    /**
      * 指定されたコメントの子コメント（返信）を取得します。
      *
      * @param parentId 親コメントID
@@ -61,6 +73,19 @@ public class RestCommentController {
      */
     @GetMapping("/comment/parent/{parentId}")
     public ResponseEntity<List<Comment>> getCommentsAndRepliesByParentId(@PathVariable Long parentId) {
+        List<Comment> comments = commentService.getCommentsAndRepliesByParentId(parentId);
+        return ResponseEntity.ok(comments);
+    }
+
+    /**
+     * 指定されたコメントの子コメント（返信）を取得します。
+     * 未認証ユーザによる取得を想定しています。
+     *
+     * @param parentId 親コメントID
+     * @return コメントリスト
+     */
+    @GetMapping("/public/comment/parent/{parentId}")
+    public ResponseEntity<List<Comment>> getPublicCommentsAndRepliesByParentId(@PathVariable Long parentId) {
         List<Comment> comments = commentService.getCommentsAndRepliesByParentId(parentId);
         return ResponseEntity.ok(comments);
     }

@@ -104,6 +104,19 @@ public class RestBlogController {
     }
 
     /**
+     * 指定されたブログ情報を取得します。
+     * 未認証ユーザによる取得を想定しています。
+     *
+     * @param blogId ブログID
+     * @return ブログ情報
+     */
+    @GetMapping("/public/blog/{blogId}")
+    public ResponseEntity<BlogInfoViewDto> getPublicBlog(@PathVariable Long blogId) {
+        BlogInfoViewDto viewDto = blogService.findPublicBlogInfo(blogId);
+        return ResponseEntity.ok(viewDto);
+    }
+
+    /**
      * ログインユーザが作成した下書きリストを取得します。
      *
      * @return ブログ情報（下書き）

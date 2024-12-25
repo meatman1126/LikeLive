@@ -143,6 +143,24 @@ public class BlogService {
     }
 
     /**
+     * 指定されたブログ情報を取得します。
+     * 未認証ユーザによる取得を想定しています。
+     *
+     * @param blogId ブログID
+     * @return ブログ情報
+     */
+    public BlogInfoViewDto findPublicBlogInfo(Long blogId) {
+        Blog blog = blogRepository.findById(blogId).orElseThrow();
+        List<Artist> artistList = blogArtistService.findArtistsByBlogId(blogId);
+
+        return BlogInfoViewDto.builder()
+                .blog(blog)
+                .artistList(artistList)
+                .isLike(false)
+                .build();
+    }
+
+    /**
      * 指定されたユーザが作成した下書き状態のブログ情報を取得します。
      *
      * @param userId ユーザID
