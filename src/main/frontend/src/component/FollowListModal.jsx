@@ -130,7 +130,7 @@ export default function FollowListModal({
               >
                 {userInfo.user.profileImageUrl ? (
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${userInfo.user.profileImageUrl}`}
+                    src={`${config.getImageUrl}/${userInfo.user.profileImageUrl}`}
                     alt={`Profile of ${userInfo.user.displayName}`}
                     className="w-10 h-10 rounded-full"
                   />

@@ -510,7 +510,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                     />
                   ) : profile.profileImageUrl ? (
                     <img
-                      src={`${config.apiBaseUrl}/api/public/files/${profile.profileImageUrl}`}
+                      src={`${config.getImageUrl}/${profile.profileImageUrl}`}
                       alt="ユーザーのプロフィール画像"
                       className={`w-full h-full rounded-full object-cover ${
                         isEditing ? "filter grayscale" : ""
@@ -570,7 +570,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
               <>
                 {profile.profileImageUrl ? (
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${profile.profileImageUrl}`}
+                    src={`${config.getImageUrl}/${profile.profileImageUrl}`}
                     alt="ユーザーのプロフィール画像"
                     className="w-32 h-32 rounded-full mb-4 md:mb-0 md:mr-6"
                   />
@@ -680,7 +680,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                         {/* サムネイル画像 */}
                         {blog.thumbnailUrl ? (
                           <img
-                            src={`${config.apiBaseUrl}/api/public/files/${blog.thumbnailUrl}`}
+                            src={`${config.getImageUrl}/${blog.thumbnailUrl}`}
                             alt={`${blog.title}のサムネイル`}
                             className="w-full h-36 object-cover rounded-t-lg mb-4"
                           />

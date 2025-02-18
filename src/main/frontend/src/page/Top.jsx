@@ -1,5 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "../App.css";
 import Fotter from "../component/Fotter";
@@ -12,14 +12,13 @@ import followSmall from "../images/follow_small.jpeg";
 import friend from "../images/friend.png";
 import top from "../images/top.png";
 import fetchWithAuth from "../util/fetchUtil";
+import { handleErrotToast } from "../util/toastUtil";
 
 export default function Top({ isAuthenticated, setIsAuthenticated }) {
   const [searchParams] = useSearchParams();
   const code = searchParams.get("code"); // 認証コードをURLから取得
   const navigate = useNavigate();
   let isFirstLogin = true;
-
-  const [errorMessage, setErrorMessage] = useState(""); // エラーメッセージ用のstate
 
   useEffect(() => {
     // 認証コードがある場合、サーバーにリクエストを送信
@@ -87,8 +86,9 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
         })
         .catch((error) => {
           console.error("Error:", error.json);
-          // 認証失敗時にエラーメッセージをstateにセット
-          setErrorMessage("ログインに失敗しました。もう一度お試しください。");
+          handleErrotToast(
+            "サインインに失敗しました。もう一度お試しください。"
+          );
         });
     }
   }, []);
@@ -110,9 +110,9 @@ export default function Top({ isAuthenticated, setIsAuthenticated }) {
     <div className="Top">
       <div className="bg-black">
         {/* エラーメッセージがあれば表示 */}
-        {errorMessage && (
+        {/* {errorMessage && (
           <div className="error-message text-red">{errorMessage}</div>
-        )}
+        )} */}
         {/* ヘッダー */}
         <div className="top-0 left-0 w-full z-10">
           <Header

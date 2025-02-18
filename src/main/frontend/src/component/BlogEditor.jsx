@@ -733,7 +733,7 @@ export default function BlogEditor({ targetBlogId }) {
           ) : thumbnailUrl ? (
             <>
               <img
-                src={`${config.apiBaseUrl}/api/public/files/${thumbnailUrl}`}
+                src={`${config.getImageUrl}/${thumbnailUrl}`}
                 alt="選択されたプロフィール画像"
                 className="w-full object-contain cursor-pointer" // 縦横比16:9を保持しつつ表示
                 onClick={triggerImageSelect}

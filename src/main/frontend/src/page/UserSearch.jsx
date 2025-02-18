@@ -150,7 +150,7 @@ export default function UserSearch({ isAuthenticated, setIsAuthenticated }) {
               <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                 {user.profileImageUrl ? (
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${user.profileImageUrl}`}
+                    src={`${config.getImageUrl}/${user.profileImageUrl}`}
                     alt={`${user.displayName}のプロフィール画像`}
                     className="w-full h-full object-cover"
                   />

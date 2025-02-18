@@ -135,15 +135,8 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
         />
       )}
       <div className="p-6 bg-gray-50 min-h-screen">
-        {/* ダッシュボードタイトル */}
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-gray-800 font-sans">
-            ダッシュボード
-          </h1>
-        </div>
-
         {/* メインコンテンツ */}
-        <main className="mx-auto max-w-5xl">
+        <main className="mt-4 mx-auto max-w-5xl">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-semibold text-gray-800">
               おすすめの新着投稿
@@ -153,59 +146,65 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
           {/* 投稿カードリスト（グリッドレイアウト） */}
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-              {posts.slice(0, visiblePosts).map((post) => (
-                <div
-                  key={post.id}
-                  className="post-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/blog/${post.id}`)}
-                >
-                  {/* サムネイル画像 */}
-                  {post.thumbnailUrl ? (
-                    <img
-                      src={`${config.apiBaseUrl}/api/public/files/${post.thumbnailUrl}`}
-                      alt={`${post.blogTitle}のサムネイル`}
-                      className="w-full h-36 object-cover rounded-t-lg mb-4" // サムネイル画像のスタイル
-                    />
-                  ) : (
-                    <img
-                      src={noImage} // カスタムプレースホルダー画像
-                      alt="サムネイルがありません"
-                      className="w-full h-36 object-cover rounded-t-lg mb-4"
-                    />
-                  )}
-
-                  {/* ブログタイトル */}
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    {post.blogTitle}
-                  </h3>
-
-                  {/* 著者情報 */}
-                  <div className="flex items-center mb-4">
-                    {post.profileImageUrl ? (
+              {posts.length === 0 ? (
+                <p className="text-left sm:text-center text-gray-700 text-lg">
+                  おすすめの投稿はまだありません。
+                </p>
+              ) : (
+                posts.slice(0, visiblePosts).map((post) => (
+                  <div
+                    key={post.id}
+                    className="post-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/blog/${post.id}`)}
+                  >
+                    {/* サムネイル画像 */}
+                    {post.thumbnailUrl ? (
                       <img
-                        src={`${config.apiBaseUrl}/api/public/files/${post.profileImageUrl}`}
-                        alt={`${post.profileImageUrl}のアイコン`}
-                        className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
+                        src={`${config.getImageUrl}/${post.thumbnailUrl}`}
+                        alt={`${post.blogTitle}のサムネイル`}
+                        className="w-full h-36 object-cover rounded-t-lg mb-4" // サムネイル画像のスタイル
                       />
                     ) : (
-                      <i className="rouded-full fas fa-user fa-2x text-blue-300 mr-4"></i>
+                      <img
+                        src={noImage} // カスタムプレースホルダー画像
+                        alt="サムネイルがありません"
+                        className="w-full h-36 object-cover rounded-t-lg mb-4"
+                      />
                     )}
-                    <div className="text-base flex justify-between w-full">
-                      <p className="font-semibold text-gray-700">
-                        {post.authorName}
-                      </p>
-                      <span className="text-xs text-gray-500">
-                        {post.isFollowAuthor ? "フォロー中" : ""}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* 投稿日 */}
-                  <p className="text-gray-500 text-sm text-right">
-                    投稿日: {post.blogCreatedTime}
-                  </p>
-                </div>
-              ))}
+                    {/* ブログタイトル */}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                      {post.blogTitle}
+                    </h3>
+
+                    {/* 著者情報 */}
+                    <div className="flex items-center mb-4">
+                      {post.profileImageUrl ? (
+                        <img
+                          src={`${config.getImageUrl}/${post.profileImageUrl}`}
+                          alt={`${post.profileImageUrl}のアイコン`}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
+                        />
+                      ) : (
+                        <i className="rouded-full fas fa-user fa-2x text-blue-300 mr-4"></i>
+                      )}
+                      <div className="text-base flex justify-between w-full">
+                        <p className="font-semibold text-gray-700">
+                          {post.authorName}
+                        </p>
+                        <span className="text-xs text-gray-500">
+                          {post.isFollowAuthor ? "フォロー中" : ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 投稿日 */}
+                    <p className="text-gray-500 text-sm text-right">
+                      投稿日: {post.blogCreatedTime}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* もっと見るボタン */}
@@ -230,7 +229,7 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
             {recomendedUsers.length === 0 ? (
               <div className="text-center my-8">
                 <p className="text-left sm:text-center text-gray-700 text-lg">
-                  共通のアーティストが好きなユーザはまだいないみたいです。。
+                  共通のアーティストが好きなユーザはまだいないみたいです。
                 </p>
                 <p className="text-left sm:text-center text-gray-700 text-lg mb-6">
                   興味のあるアーティストを追加してみましょう
@@ -258,7 +257,7 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
                       <div className="flex items-center mb-4">
                         {user.profileImageUrl ? (
                           <img
-                            src={`${config.apiBaseUrl}/api/public/files/${user.profileImageUrl}`}
+                            src={`${config.getImageUrl}/${user.profileImageUrl}`}
                             alt={`${user.profileImageUrl}のアイコン`}
                             className="w-10 h-10 rounded-full border-2 border-gray-300 mr-4"
                           />

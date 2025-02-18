@@ -249,7 +249,7 @@ export default function BlogViewer({
               {blogInfo.thumbnailUrl && (
                 <>
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${blogInfo.thumbnailUrl}`}
+                    src={`${config.getImageUrl}/${blogInfo.thumbnailUrl}`}
                     alt="選択されたプロフィール画像"
                     className="w-full object-contain"
                   />
@@ -276,7 +276,7 @@ export default function BlogViewer({
               >
                 {blogInfo.author.profileImageUrl ? (
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${blogInfo.author.profileImageUrl}`}
+                    src={`${config.getImageUrl}/${blogInfo.author.profileImageUrl}`}
                     alt="プロフィール画像"
                     className="w-10 h-10 rounded-full mr-2"
                   />

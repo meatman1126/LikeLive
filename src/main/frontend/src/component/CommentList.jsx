@@ -236,7 +236,7 @@ export default function CommentList({
       >
         {comment.author.profileImageUrl ? (
           <img
-            src={`${config.apiBaseUrl}/api/public/files/${comment.author.profileImageUrl}`}
+            src={`${config.getImageUrl}/${comment.author.profileImageUrl}`}
             alt={`${comment.author.displayName}のプロフィール画像`}
             className="w-10 h-10 rounded-full object-cover"
           />

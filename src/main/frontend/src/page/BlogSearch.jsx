@@ -222,7 +222,7 @@ export default function BlogSearch({ isAuthenticated, setIsAuthenticated }) {
               {/* サムネイル画像 */}
               {result.thumbnailUrl ? (
                 <img
-                  src={`${config.apiBaseUrl}/api/public/files/${result.thumbnailUrl}`}
+                  src={`${config.getImageUrl}/${result.thumbnailUrl}`}
                   alt={`${result.title}のサムネイル画像`}
                   className="w-full h-48 object-cover"
                 />
@@ -246,7 +246,7 @@ export default function BlogSearch({ isAuthenticated, setIsAuthenticated }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <img
-                        src={`${config.apiBaseUrl}/api/public/files/${result.author.profileImageUrl}`}
+                        src={`${config.getImageUrl}/${result.author.profileImageUrl}`}
                         alt={`${result.author.displayName}のプロフィール画像`}
                         className="w-10 h-10 rounded-full object-cover mr-3"
                       />
