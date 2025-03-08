@@ -155,7 +155,7 @@ function Dashboard({ isAuthenticated, setIsAuthenticated }) {
                   <div
                     key={post.id}
                     className="post-card bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/blog/${post.id}`)}
+                    onClick={() => navigate(`/blog/view/${post.id}`)}
                   >
                     {/* サムネイル画像 */}
                     {post.thumbnailUrl ? (

@@ -38,6 +38,7 @@ public class SecurityConfig {
                         ).permitAll()
                         // /api/public 配下は未認証のユーザもアクセス可能
                         .requestMatchers("/login/callback").permitAll()
+                        .requestMatchers("/meta/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/static/**").permitAll()

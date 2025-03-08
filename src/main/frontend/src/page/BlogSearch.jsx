@@ -217,7 +217,7 @@ export default function BlogSearch({ isAuthenticated, setIsAuthenticated }) {
               key={result.id}
               className="border rounded-lg overflow-hidden shadow-lg flex flex-col justify-between hover:shadow-xl transition-shadow cursor-pointer"
               style={{ height: "100%" }} // カード全体の高さを指定
-              onClick={() => navigate(`/blog/${result.id}`)}
+              onClick={() => navigate(`/blog/view/${result.id}`)}
             >
               {/* サムネイル画像 */}
               {result.thumbnailUrl ? (

@@ -675,7 +675,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                       <div
                         key={blog.id}
                         className="bg-gray-100 p-2 rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
-                        onClick={() => navigate(`/blog/${blog.id}`)}
+                        onClick={() => navigate(`/blog/view/${blog.id}`)}
                       >
                         {/* サムネイル画像 */}
                         {blog.thumbnailUrl ? (

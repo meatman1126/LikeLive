@@ -272,7 +272,7 @@ export default function BlogEditor({ targetBlogId }) {
     // 確認モーダルを閉じ、ダッシュボード画面に遷移
     setModalType(null);
     if (targetBlogId) {
-      navigate(`/blog/${targetBlogId}`);
+      navigate(`/blog/view/${targetBlogId}`);
       return;
     }
     navigate("/dashboard");
@@ -531,7 +531,7 @@ export default function BlogEditor({ targetBlogId }) {
         const data = await response.json();
         // 保存成功後閲覧画面に遷移する
         handleSuccessToast("ブログが保存されました");
-        navigate(`/blog/${data.id}`);
+        navigate(`/blog/view/${data.id}`);
       } else {
         console.error("ブログ保存に失敗しました");
       }
@@ -613,7 +613,7 @@ export default function BlogEditor({ targetBlogId }) {
 
       if (response.ok) {
         handleSuccessToast("ブログを非公開に変更しました。");
-        navigate(`/blog/${targetBlogId}`);
+        navigate(`/blog/view/${targetBlogId}`);
         return;
       } else {
         console.error("非公開処理に失敗しました");

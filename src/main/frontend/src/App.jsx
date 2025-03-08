@@ -53,7 +53,7 @@ function AppContent() {
             />
             {/* ブログ閲覧画面(閲覧は未認証でも許可する) */}
             <Route
-              path="/blog/:targetBlogId"
+              path="/blog/view/:targetBlogId"
               element={
                 <Blog
                   isAuthenticated={isAuthenticated}
