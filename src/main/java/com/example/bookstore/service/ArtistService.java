@@ -6,6 +6,7 @@ import com.example.bookstore.service.util.UserUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -51,6 +52,26 @@ public class ArtistService {
 
         //inputされたartistが未登録の場合DBへ登録する
         return Objects.requireNonNullElseGet(artist, () -> artistRepository.save(input));
+    }
+
+    /**
+     * 指定されたartistデータを更新します。
+     *
+     * @param artistId 更新対象のartistID
+     * @param input    artist情報
+     * @return 更新されたartist情報
+     */
+    public Artist updateArtist(String artistId, Artist input) {
+        Artist existingArtist = artistRepository.findById(artistId).orElseThrow(
+                () -> new IllegalStateException("指定されたアーティストデータは存在しません"));
+
+
+        existingArtist.setName(input.getName());
+        existingArtist.setImageUrl(input.getImageUrl());
+        existingArtist.setUpdatedBy(userUtilService.getCurrentUser().getId().toString());
+        existingArtist.setUpdatedAt(LocalDateTime.now());
+
+        return artistRepository.save(existingArtist);
     }
 
 

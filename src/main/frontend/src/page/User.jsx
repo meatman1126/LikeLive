@@ -3,6 +3,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import { useNavigate, useParams } from "react-router-dom";
+import ArtistModal from "../component/ArtistModal";
 import FollowListModal from "../component/FollowListModal";
 import Header from "../component/Header";
 import config from "../config/properties";
@@ -66,6 +67,9 @@ function User({ isAuthenticated, setIsAuthenticated }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const [isArtistModalOpen, setIsArtistModalOpen] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
 
   // ローディング状態の管理
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +182,11 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     }
   };
 
+  const handleArtistClick = (artist) => {
+    setSelectedArtist(artist);
+    setIsArtistModalOpen(true);
+  };
+
   const fetchUserProfile = async () => {
     startLoading(); // ローディング開始
     try {
@@ -270,7 +279,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
       formData.append("displayName", profile.displayName);
       formData.append("selfIntroduction", profile.selfIntroduction);
 
-      // selectedArtist配列が存在する場合、ループで個別に追加
+      // favoriteArtist配列が存在する場合、ループで個別に追加
       if (profile.favoriteArtistList && profile.favoriteArtistList.length > 0) {
         profile.favoriteArtistList.forEach((artist, index) => {
           formData.append(`favoriteArtistList[${index}].id`, artist.id);
@@ -397,7 +406,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
     stopLoading();
   };
 
-  const addSelectedArtist = (artist) => {
+  const addFavoriteArtist = (artist) => {
     const newArtist = {
       id: artist.id,
       name: artist.name,
@@ -746,6 +755,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                   <div
                     key={index}
                     className="bg-gray-100 p-2 rounded flex items-center shadow-lg"
+                    onClick={() => handleArtistClick(artist)}
                   >
                     <img
                       src={artist.imageUrl}
@@ -790,7 +800,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                       <li
                         key={artist.id}
                         className="p-2 cursor-pointer hover:bg-gray-200 font-roboto flex items-center space-x-4"
-                        onClick={() => addSelectedArtist(artist)}
+                        onClick={() => addFavoriteArtist(artist)}
                       >
                         {artist.images.length > 0 && (
                           <img
@@ -842,6 +852,12 @@ function User({ isAuthenticated, setIsAuthenticated }) {
           setUsersInfo={setFollowers}
           onClose={clearFollowers}
           isOthersInfo={isOthersPage ? true : false}
+        />
+      )}
+      {isArtistModalOpen && (
+        <ArtistModal
+          onClose={() => setIsArtistModalOpen(false)}
+          artistInfo={selectedArtist}
         />
       )}
     </div>
