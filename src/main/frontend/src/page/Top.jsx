@@ -1,118 +1,34 @@
-import { useGoogleLogin } from "@react-oauth/google";
-import React, { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React from "react";
+import { useSearchParams } from "react-router-dom";
 import "../App.css";
 import Fotter from "../component/Fotter";
 import Header from "../component/Header";
-import config from "../config/properties";
+import { useAuth } from "../hooks/useAuth";
 import blogLarge from "../images/blog_large.jpeg";
 import blogSmall from "../images/blog_small.jpeg";
 import followLarge from "../images/follow_large.jpeg";
 import followSmall from "../images/follow_small.jpeg";
 import friend from "../images/friend.png";
 import top from "../images/top.png";
-import fetchWithAuth from "../util/fetchUtil";
-import { handleErrotToast } from "../util/toastUtil";
 
 export default function Top({ isAuthenticated, setIsAuthenticated }) {
   const [searchParams] = useSearchParams();
   const code = searchParams.get("code"); // 認証コードをURLから取得
-  const navigate = useNavigate();
-  let isFirstLogin = true;
 
-  useEffect(() => {
-    // 認証コードがある場合、サーバーにリクエストを送信
-    if (code && !isAuthenticated) {
-      fetch(`${config.apiBaseUrl}/api/oauth/callback`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(response.status);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          // サーバーから返ってきたデータを使用して、ログイン状態を更新
-          if (data.access_token) {
-            setIsAuthenticated(true);
-            // 認証が成功したら localStorage に保存し、状態を更新
-            localStorage.setItem("ll_isAuthenticated", "true");
-            // アクセストークンをlocalStorageに保存
-            localStorage.setItem("ll_accessToken", data.access_token);
-            localStorage.setItem("ll_refreshToken", data.refresh_token);
-            localStorage.setItem(
-              "ll_tokenExpires",
-              Date.now() + data.expires_in * 1000
-            );
+  // 認証関連の処理をカスタムフックから取得
+  const { login, handleAuthenticationCallback } = useAuth(
+    isAuthenticated,
+    setIsAuthenticated
+  );
 
-            // 認証成功後、/login/after API を呼び出してユーザ情報を取得または登録
-            fetchWithAuth(`${config.apiBaseUrl}/api/login/after`, {
-              method: "POST",
-            })
-              .then((response) => {
-                return response.json();
-              })
-              .then((data) => {
-                localStorage.setItem("ll_userId", data.id);
-                // 必要に応じてユーザ情報を保存したり、状態を更新する処理
-                if (data.updatedBy !== "System") {
-                  isFirstLogin = false;
-                }
-                // 認証成功後、ダッシュボード画面に遷移
-                navigate("/dashboard", {
-                  state: { isFirstLogin: isFirstLogin, userInfo: data },
-                });
-              })
-              .catch((userError) => {
-                // 認証に失敗した場合
-                console.error("ユーザ情報取得エラー:", userError);
-                // 認証を解除
-                localStorage.setItem("ll_isAuthenticated", "false");
-                // アクセストークンをlocalStorageから削除
-                localStorage.removeItem("ll_accessToken");
-                localStorage.removeItem("ll_refreshToken");
-                localStorage.removeItem("ll_tokenExpires");
-                localStorage.removeItem("ll_userId");
-
-                setIsAuthenticated(false);
-                navigate("/");
-              });
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error.json);
-          handleErrotToast(
-            "サインインに失敗しました。もう一度お試しください。"
-          );
-        });
-    }
-  }, []);
-
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {},
-    flow: "auth-code", // リダイレクト方式を指定
-    ux_mode: "redirect",
-    redirect_uri: config.oauthRedirectUri, // リダイレクト先を指定
-
-    onError: (errorResponse) => {
-      console.log(errorResponse);
-      localStorage.setItem("ll_isAuthenticated", "false");
-      localStorage.removeItem("ll_accessToken");
-    },
-  });
+  // 認証コードがある場合の処理
+  React.useEffect(() => {
+    handleAuthenticationCallback(code);
+  }, [code, handleAuthenticationCallback]);
 
   return (
     <div className="Top">
       <div className="bg-black">
-        {/* エラーメッセージがあれば表示 */}
-        {/* {errorMessage && (
-          <div className="error-message text-red">{errorMessage}</div>
-        )} */}
         {/* ヘッダー */}
         <div className="top-0 left-0 w-full z-10">
           <Header

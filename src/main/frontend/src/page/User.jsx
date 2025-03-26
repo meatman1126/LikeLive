@@ -754,7 +754,7 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                 {profile.favoriteArtistList.map((artist, index) => (
                   <div
                     key={index}
-                    className="bg-gray-100 p-2 rounded flex items-center shadow-lg"
+                    className="bg-gray-100 p-2 rounded flex items-center shadow-lg cursor-pointer"
                     onClick={() => handleArtistClick(artist)}
                   >
                     <img
@@ -766,7 +766,10 @@ function User({ isAuthenticated, setIsAuthenticated }) {
                     {isEditing && (
                       <button
                         type="button"
-                        onClick={() => removeArtist(artist.id)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // アーティスト削除時handleArtistClickを実行しない
+                          removeArtist(artist.id);
+                        }}
                         className="text-red-500 hover:text-red-700 ml-auto"
                       >
                         &times;

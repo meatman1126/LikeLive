@@ -250,7 +250,9 @@ export default function CommentList({
             {comment.author.displayName}
           </div>
           {/* コメント内容 */}
-          <div className="font-roboto text-gray-900">{comment.content}</div>
+          <div className="font-roboto text-gray-900 whitespace-pre-wrap">
+            {comment.content}
+          </div>
 
           {/* 返信がある場合、返信表示ボタン */}
           {!isReply && comment.replyCount > 0 && (
@@ -277,28 +279,29 @@ export default function CommentList({
           {/* 返信入力欄の表示 */}
           {!isReply && showReplyInput[comment.id] && (
             <div className="mt-4 flex gap-2">
-              <input
+              <textarea
                 type="text"
-                name={`reply-${comment.id}`} // 返信テキストの入力欄
+                name={`reply-${comment.id}`}
                 value={replyTexts[comment.id] || ""}
                 onChange={(e) =>
                   setReplyTexts((prev) => ({
                     ...prev,
-                    [comment.id]: e.target.value, // 返信テキストをStateに保存
+                    [comment.id]: e.target.value,
                   }))
                 }
-                onClick={(e) => e.stopPropagation()} // 親要素へのクリックイベントを伝播させない
+                onClick={(e) => e.stopPropagation()}
                 placeholder="返信を入力..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                rows="3"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
               />
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleNewReply(comment.id); // 返信コメントを追加
+                  handleNewReply(comment.id);
                 }}
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 self-end"
               >
-                <i className="fas fa-paper-plane"></i> {/* 送信アイコン */}
+                <i className="fas fa-paper-plane"></i>
               </button>
             </div>
           )}
@@ -314,19 +317,20 @@ export default function CommentList({
         {isAuthenticated && (
           <div className="p-4 border-b border-gray-200">
             <div className="flex gap-2">
-              <input
+              <textarea
                 type="text"
-                name="new-comment" // 新規コメントの入力欄
+                name="new-comment"
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)} // 新規コメントの内容をStateに保存
+                onChange={(e) => setNewComment(e.target.value)}
                 placeholder="コメントを入力..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                rows="3"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
               />
               <button
-                onClick={handleNewComment} // コメントを追加する
-                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                onClick={handleNewComment}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 self-end"
               >
-                <i className="fas fa-paper-plane"></i> {/* 送信アイコン */}
+                <i className="fas fa-paper-plane"></i>
               </button>
             </div>
           </div>
