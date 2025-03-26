@@ -1,12 +1,14 @@
 package com.example.bookstore.dto.repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.bookstore.entity.Artist;
 import com.example.bookstore.entity.Blog;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.List;
 
 
 /**
@@ -46,4 +48,12 @@ public class ProfileRepositoryDto {
      */
     private List<Blog> blogList;
 
+    public ProfileRepositoryDto(Long userId, String displayName, String profileImageUrl, String selfIntroduction) {
+        this.userId = userId;
+        this.displayName = displayName;
+        this.profileImageUrl = profileImageUrl;
+        this.selfIntroduction = selfIntroduction;
+        this.favoriteArtistList = new ArrayList<>();
+        this.blogList = new ArrayList<>();
+    }
 }

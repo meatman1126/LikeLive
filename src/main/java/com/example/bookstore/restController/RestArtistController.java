@@ -1,12 +1,21 @@
 package com.example.bookstore.restController;
 
 
-import com.example.bookstore.dto.form.artist.ArtistUpdateForm;
-import com.example.bookstore.entity.Artist;
-import com.example.bookstore.service.ArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.bookstore.dto.form.artist.ArtistUpdateForm;
+import com.example.bookstore.entity.Artist;
+import com.example.bookstore.exception.ArtistNotFoundException;
+import com.example.bookstore.service.ArtistService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 /**
  * Restアーティストコントローラ
@@ -26,11 +35,16 @@ public class RestArtistController {
      *
      * @param artistId アーティストID
      * @return アーティスト情報
+     * @throws EntityNotFoundException アーティストが存在しない場合
      */
-    @GetMapping("/artist/{artistId}")
-    public ResponseEntity<Artist> getArtist(@PathVariable String artistId) {
-        Artist artist = artistService.findById(artistId);
-        return ResponseEntity.ok(artist);
+         @GetMapping("/artist/{artistId}")
+         public ResponseEntity<Artist> getArtist(@PathVariable String artistId){
+        try {
+            Artist artist = artistService.findById(artistId);
+            return ResponseEntity.ok(artist);
+        } catch (ArtistNotFoundException e) {
+            throw new EntityNotFoundException("Artist not found with id: " + artistId);
+        }
     }
 
     /**

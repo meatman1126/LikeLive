@@ -1,18 +1,11 @@
 package com.example.bookstore.service;
 
-import com.example.bookstore.dto.repository.DashboardBlogRepositoryDto;
-import com.example.bookstore.dto.view.BlogInfoViewDto;
-import com.example.bookstore.dto.view.DashboardBlogViewDto;
-import com.example.bookstore.entity.*;
-import com.example.bookstore.entity.code.BlogStatus;
-import com.example.bookstore.entity.code.NotificationType;
-import com.example.bookstore.entity.key.UserBlogLikeId;
-import com.example.bookstore.repository.jpa.BlogRepository;
-import com.example.bookstore.repository.jpa.UserBlogLikeRepository;
-import com.example.bookstore.repository.jpa.UserRepository;
-import com.example.bookstore.service.util.StorageService;
-import com.example.bookstore.service.util.UserUtilService;
-import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,11 +14,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.example.bookstore.dto.repository.DashboardBlogRepositoryDto;
+import com.example.bookstore.dto.view.BlogInfoViewDto;
+import com.example.bookstore.dto.view.DashboardBlogViewDto;
+import com.example.bookstore.entity.Artist;
+import com.example.bookstore.entity.Blog;
+import com.example.bookstore.entity.Notification;
+import com.example.bookstore.entity.User;
+import com.example.bookstore.entity.UserBlogLike;
+import com.example.bookstore.entity.code.BlogStatus;
+import com.example.bookstore.entity.code.NotificationType;
+import com.example.bookstore.entity.key.UserBlogLikeId;
+import com.example.bookstore.exception.BlogNotFoundException;
+import com.example.bookstore.repository.jpa.BlogRepository;
+import com.example.bookstore.repository.jpa.UserBlogLikeRepository;
+import com.example.bookstore.repository.jpa.UserRepository;
+import com.example.bookstore.service.util.StorageService;
+import com.example.bookstore.service.util.UserUtilService;
+
+import jakarta.persistence.EntityManager;
 
 /**
  * ブログサービス
@@ -84,29 +91,28 @@ public class BlogService {
     @Autowired
     private EntityManager entityManager;
 
+    // ローカル開発の段階でElasticsearchを導入するのが難しいため一旦保留する
+    // @Autowired
+    // BlogSearchRepository blogSearchRepository;
 
-    //ローカル開発の段階でElasticsearchを導入するのが難しいため一旦保留する
-//    @Autowired
-//    BlogSearchRepository blogSearchRepository;
+    // public List<Blog> searchBlogs(String keyword) {
+    // return blogSearchRepository.findByTitleContainingOrContentContainingOrTagsContaining(keyword);
+    // }
 
-//    public List<Blog> searchBlogs(String keyword) {
-//        return blogSearchRepository.findByTitleContainingOrContentContainingOrTagsContaining(keyword);
-//    }
-
-//    /**
-//     * キーワードに合致するブログ情報を取得します。
-//     *
-//     * @param keyword 検索キーワード
-//     * @return 検索結果
-//     */
-//    public List<Blog> searchBlog(String keyword) {
-//        return blogRepository.searchBlogsByKeyword(keyword);
-//    }
+    // /**
+    // * キーワードに合致するブログ情報を取得します。
+    // *
+    // * @param keyword 検索キーワード
+    // * @return 検索結果
+    // */
+    // public List<Blog> searchBlog(String keyword) {
+    // return blogRepository.searchBlogsByKeyword(keyword);
+    // }
 
     /**
      * キーワードに合致するブログ情報をページネーションとソート付きで取得します。
      *
-     * @param keyword  検索キーワード
+     * @param keyword 検索キーワード
      * @param pageable ページネーションとソート情報
      * @return 検索結果（ページネーション付き）
      */
@@ -119,9 +125,11 @@ public class BlogService {
      *
      * @param blogId ブログID
      * @return ブログ情報
+     * @throws BlogNotFoundException ブログが見つからない場合
      */
     public Blog findById(Long blogId) {
-        return blogRepository.findById(blogId).orElseThrow();
+        return blogRepository.findById(blogId)
+                .orElseThrow(() -> new BlogNotFoundException("Blog not found with id: " + blogId));
     }
 
     /**
@@ -129,35 +137,31 @@ public class BlogService {
      *
      * @param blogId ブログID
      * @return ブログ情報
+     * @throws BlogNotFoundException ブログが見つからない場合
      */
     public BlogInfoViewDto findBlogInfo(Long blogId) {
-        Blog blog = blogRepository.findById(blogId).orElseThrow();
+        Blog blog = blogRepository.findById(blogId)
+                .orElseThrow(() -> new BlogNotFoundException("Blog not found with id: " + blogId));
         List<Artist> artistList = blogArtistService.findArtistsByBlogId(blogId);
         Boolean isLike = userBlogLikeRepository.isLikeBlog(userUtilService.getCurrentUser().getId(), blogId);
 
-        return BlogInfoViewDto.builder()
-                .blog(blog)
-                .artistList(artistList)
-                .isLike(isLike)
-                .build();
+        return BlogInfoViewDto.builder().blog(blog).artistList(artistList).isLike(isLike).build();
     }
 
     /**
-     * 指定されたブログ情報を取得します。
-     * 未認証ユーザによる取得を想定しています。
+     * 指定されたブログ情報を取得します。 
+     * 未認証ユーザによる取得を想定、いいね情報はnullで返す 
      *
      * @param blogId ブログID
      * @return ブログ情報
+     * @throws BlogNotFoundException ブログが見つからない場合
      */
     public BlogInfoViewDto findPublicBlogInfo(Long blogId) {
-        Blog blog = blogRepository.findById(blogId).orElseThrow();
+        Blog blog = blogRepository.findById(blogId)
+                .orElseThrow(() -> new BlogNotFoundException("Blog not found with id: " + blogId));
         List<Artist> artistList = blogArtistService.findArtistsByBlogId(blogId);
 
-        return BlogInfoViewDto.builder()
-                .blog(blog)
-                .artistList(artistList)
-                .isLike(false)
-                .build();
+        return BlogInfoViewDto.builder().blog(blog).artistList(artistList).isLike(false).build();
     }
 
     /**
@@ -181,15 +185,16 @@ public class BlogService {
     }
 
     public List<DashboardBlogViewDto> findInterestBlogs(Long userId) {
-        List<DashboardBlogRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId, BlogStatus.PUBLISHED, PageRequest.of(0, 10));
+        List<DashboardBlogRepositoryDto> repositoryDtoList = blogRepository.findInterestBlogs(userId,
+                BlogStatus.PUBLISHED, PageRequest.of(0, 10));
         return DashboardBlogViewDto.toViewDto(repositoryDtoList);
     }
 
     /**
      * ブログ情報を登録します。
      *
-     * @param input          登録するブログ情報
-     * @param artistIdList   アーティストIDリスト
+     * @param input 登録するブログ情報
+     * @param artistIdList アーティストIDリスト
      * @param thumbnailImage サムネイル画像ファイル
      * @return 登録されたブログ情報
      */
@@ -213,7 +218,6 @@ public class BlogService {
         // ブログアーティスト関連データの登録
         blogArtistService.saveBlogArtist(input, artistIdList);
 
-
         // Elasticsearchのインデックスを登録
         // blogSearchRepository.save(createdBlog);
 
@@ -224,13 +228,12 @@ public class BlogService {
         return createdBlog;
     }
 
-
     /**
      * ブログ情報を更新します。
      *
-     * @param blogId         更新対象のブログID
-     * @param input          ブログ更新情報
-     * @param artistIdList   アーティストIDリスト
+     * @param blogId 更新対象のブログID
+     * @param input ブログ更新情報
+     * @param artistIdList アーティストIDリスト
      * @param thumbnailImage サムネイル画像ファイル
      */
     @Transactional
@@ -259,8 +262,7 @@ public class BlogService {
         // URLをブログエンティティにセット
         input.setThumbnailUrl(filePath);
 
-
-        //DBを更新
+        // DBを更新
         blogRepository.update(blogId, input);
 
         // 関連アーティスト情報を保存
@@ -268,9 +270,8 @@ public class BlogService {
 
         Blog updatedBlog = blogRepository.findById(blogId).orElseThrow();
 
-
-        //Elasticsearchのインデックスを更新
-//        blogSearchRepository.save(updatedBlog);
+        // Elasticsearchのインデックスを更新
+        // blogSearchRepository.save(updatedBlog);
 
         entityManager.flush();
         entityManager.refresh(updatedBlog);
@@ -286,7 +287,7 @@ public class BlogService {
     /**
      * ブログのいいね回数を更新します。
      *
-     * @param blogId   更新対象のブログID
+     * @param blogId 更新対象のブログID
      * @param isCansel いいね取り消しフラグ
      * @return 更新後のいいね数
      */
@@ -309,7 +310,8 @@ public class BlogService {
      * @param blogId 更新対象のブログID
      */
     public int updatedViewCount(Long blogId) {
-        int updatedViewCount = blogRepository.findById(blogId).orElseThrow().getViewCount();
+        int currentViewCount = blogRepository.findById(blogId).orElseThrow().getViewCount();
+        int updatedViewCount = currentViewCount + 1; // 閲覧回数を1増やす
         blogRepository.updateViewCount(blogId, updatedViewCount, userUtilService.getCurrentUserId());
         return updatedViewCount;
     }
@@ -317,7 +319,7 @@ public class BlogService {
     /**
      * ブログのコメント数を更新します。
      *
-     * @param blogId   更新対象のブログID
+     * @param blogId 更新対象のブログID
      * @param isCansel コメント取り消しフラグ
      * @return 更新後のコメント数
      */
@@ -336,7 +338,7 @@ public class BlogService {
     /**
      * ブログを非公開にします。
      *
-     * @param blogId    ブログID
+     * @param blogId ブログID
      * @param updatedBy 更新者（ユーザID）
      * @throws IllegalArgumentException 指定されたブログが見つからない場合
      */
@@ -368,7 +370,7 @@ public class BlogService {
         // DBのデータを削除
         blogRepository.delete(blogId, userUtilService.getCurrentUser().getId().toString());
         // Elasticsearchのインデックス削除
-//        blogSearchRepository.deleteById(blogId);
+        // blogSearchRepository.deleteById(blogId);
         // 関連する未読通知の削除
         deleteNotificationOfBlogCreated(blogId);
     }
@@ -385,17 +387,10 @@ public class BlogService {
         List<User> followedList = followService.getFollowers();
         // 各フォロワーに対して通知データを作成する。
         for (User user : followedList) {
-            Notification notification = Notification.builder()
-                    .targetUser(user)
-                    .notificationType(NotificationType.BLOG_CREATED)
-                    .relatedBlog(blog)
-                    .notificationCreatedAt(LocalDateTime.now())
-                    .isRead(false)
-                    .triggerUser(triggerUser)
-                    .isDeleted(false)
-                    .createdBy(triggerUser.getId().toString())
-                    .updatedBy(triggerUser.getId().toString())
-                    .build();
+            Notification notification = Notification.builder().targetUser(user)
+                    .notificationType(NotificationType.BLOG_CREATED).relatedBlog(blog)
+                    .notificationCreatedAt(LocalDateTime.now()).isRead(false).triggerUser(triggerUser).isDeleted(false)
+                    .createdBy(triggerUser.getId().toString()).updatedBy(triggerUser.getId().toString()).build();
 
             notificationService.saveNotification(notification);
         }
@@ -407,17 +402,16 @@ public class BlogService {
      * @param blogId ブログID
      */
     private void deleteNotificationOfBlogCreated(Long blogId) {
-        //削除されたブログに関する通知を検索し未読の場合削除する
+        // 削除されたブログに関する通知を検索し未読の場合削除する
         List<Notification> notifications = notificationService.getUnreadBlogCreatedNotificationsByBlogId(blogId);
         if (!notifications.isEmpty()) {
-            notificationService.deleteNotifications(
-                    notifications.stream().map(Notification::getId).collect(Collectors.toList()));
+            notificationService
+                    .deleteNotifications(notifications.stream().map(Notification::getId).collect(Collectors.toList()));
         }
     }
 
     /**
-     * ユーザとブログを指定していいねを登録するメソッド
-     * すでにいいね済みの場合は登録を行わない
+     * ユーザとブログを指定していいねを登録するメソッド すでにいいね済みの場合は登録を行わない
      *
      * @param userId ユーザID
      * @param blogId ブログID
@@ -428,13 +422,9 @@ public class BlogService {
         if (!userBlogLikeRepository.isLikeBlog(userId, blogId)) {
             // いいねを新規登録
             User currentUser = userRepository.findById(userId).orElseThrow();
-            UserBlogLike userBlogLike = UserBlogLike.builder()
-                    .id(new UserBlogLikeId(userId, blogId))
-                    .user(currentUser)
-                    .blog(blogRepository.findById(blogId).orElseThrow())
-                    .createdBy(currentUser.getId().toString())
-                    .updatedBy(currentUser.getId().toString())
-                    .build();
+            UserBlogLike userBlogLike = UserBlogLike.builder().id(new UserBlogLikeId(userId, blogId)).user(currentUser)
+                    .blog(blogRepository.findById(blogId).orElseThrow()).createdBy(currentUser.getId().toString())
+                    .updatedBy(currentUser.getId().toString()).build();
             userBlogLikeRepository.save(userBlogLike);
             // いいね数を更新
             return updatedLikeCount(blogId, false);
@@ -466,6 +456,5 @@ public class BlogService {
         // ブログデータのいいね数更新
         return updatedLikeCount(blogId, true);
     }
-
 
 }

@@ -1,14 +1,22 @@
 package com.example.bookstore.restController;
 
-import com.example.bookstore.service.util.StorageService;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import com.example.bookstore.exception.FileAccessException;
+import com.example.bookstore.exception.FileNotFoundException;
+import com.example.bookstore.service.util.StorageService;
 
 /**
  * Restファイルコントローラ
@@ -34,17 +42,19 @@ public class RestFileController {
         try {
             Resource resource = storageService.getFile(filename);
 
-            // ファイルが存在し、アクセス可能か確認
-            if (resource.exists() || resource.isReadable()) {
-                // レスポンスにファイルを含めて返却
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                        .body(resource);
-            } else {
-                throw new RuntimeException("ファイルが存在しないか、読み込み不可能です。");
+            if (!resource.exists()) {
+                throw new FileNotFoundException("ファイルが存在しません。");
             }
+            if (!resource.isReadable()) {
+                throw new FileAccessException("ファイルが読み込み不可能です。");
+            }
+            // レスポンスにファイルを含めて返却
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .body(resource);
+
         } catch (Exception e) {
-            throw new RuntimeException("ファイルの取得中にエラーが発生しました。", e);
+            throw new FileAccessException("ファイルの取得中にエラーが発生しました。", e);
         }
     }
 
@@ -69,7 +79,7 @@ public class RestFileController {
             return ResponseEntity.ok(fileName);
 
         } catch (Exception e) {
-            throw new RuntimeException("ファイルの取得中にエラーが発生しました。", e);
+            throw new FileAccessException("ファイルの保存中にエラーが発生しました。", e);
         }
     }
 }

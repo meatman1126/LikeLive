@@ -1,6 +1,14 @@
 package com.example.bookstore.service;
 
-import com.example.bookstore.Exception.UserNotFoundException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.bookstore.dto.form.user.UserRegistrationForm;
 import com.example.bookstore.dto.form.user.UserUpdateForm;
 import com.example.bookstore.dto.view.ProfileViewDto;
@@ -9,22 +17,16 @@ import com.example.bookstore.entity.Blog;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.entity.UserArtist;
 import com.example.bookstore.entity.key.UserArtistId;
+import com.example.bookstore.exception.UserNotFoundException;
 import com.example.bookstore.repository.jpa.BlogRepository;
 import com.example.bookstore.repository.jpa.FollowRepository;
 import com.example.bookstore.repository.jpa.UserArtistRepository;
 import com.example.bookstore.repository.jpa.UserRepository;
 import com.example.bookstore.service.util.StorageService;
 import com.example.bookstore.service.util.UserUtilService;
+
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * ユーザサービスクラス
@@ -80,7 +82,6 @@ public class UserService {
     @Autowired
     private EntityManager entityManager;
 
-
     /**
      * 指定されたユーザ情報を取得します。
      *
@@ -90,9 +91,7 @@ public class UserService {
      */
     @Transactional
     public User getUserInfo(Long id) throws UserNotFoundException {
-        return userRepository.findById(id).orElseThrow(
-                () -> new UserNotFoundException("User :" + id + " not found")
-        );
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User :" + id + " not found"));
     }
 
     /**
@@ -118,12 +117,13 @@ public class UserService {
     /**
      * ユーザのプロフィール、アーティスト、ブログ情報を取得します
      *
-     * @param userId       ユーザID
+     * @param userId ユーザID
      * @param isOthersInfo 他ユーザの情報を取得する場合true
      * @return ProfileRepositoryDto ユーザのプロフィール情報
      */
     public ProfileViewDto getUserProfile(Long userId, Boolean isOthersInfo) {
-        User userInfo = userRepository.findById(userId).orElseThrow();
+        User userInfo = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
         List<Artist> favoriteArtistList = userArtistRepository.findFavoriteArtistsByUserId(userInfo.getId());
         List<Blog> createdBlogList = blogRepository.findPublishedBlogsByUserId(userInfo.getId());
         // 指定ユーザがフォロー中のユーザ数をカウント
@@ -136,7 +136,8 @@ public class UserService {
             // ログインユーザの対象ユーザフォロー有無を取得
             isFollow = followRepository.isFollowing(userUtilService.getCurrentUser().getId(), userId);
         }
-        return ProfileViewDto.build(userInfo, favoriteArtistList, createdBlogList, followedCount, followerCount, isFollow);
+        return ProfileViewDto.build(userInfo, favoriteArtistList, createdBlogList, followedCount, followerCount,
+                isFollow);
     }
 
     /**
@@ -146,7 +147,7 @@ public class UserService {
      * @return 該当するユーザのリスト
      */
     public List<User> searchUser(String keyword) {
-        return userRepository.searchUser(keyword, userUtilService.getCurrentUserId());
+        return userRepository.searchUser(keyword, userUtilService.getCurrentUser().getId());
     }
 
     /**
@@ -156,13 +157,8 @@ public class UserService {
      * @return 登録されたユーザ情報
      */
     public User register(OidcUser input) {
-        User user = User.builder()
-                .displayName(input.getAttribute("given_name"))
-                .subject(input.getAttribute("sub"))
-                .enabled(true)
-                .createdBy("System")
-                .updatedBy("System")
-                .build();
+        User user = User.builder().displayName(input.getAttribute("given_name")).subject(input.getAttribute("sub"))
+                .enabled(true).createdBy("System").updatedBy("System").build();
         return userRepository.save(user);
     }
 
@@ -176,7 +172,6 @@ public class UserService {
         return userRepository.save(input);
     }
 
-
     /**
      * ユーザ情報の初期更新を行います。
      *
@@ -188,20 +183,21 @@ public class UserService {
 
     }
 
-
     /**
      * ユーザプロフィール情報を更新するメソッド
      */
     @Transactional
     public User updateUserProfile(UserUpdateForm input, MultipartFile profileImage) {
-        return updateUser(input.getDisplayName(), input.getSelfIntroduction(), profileImage, input.getFavoriteArtistList());
+        return updateUser(input.getDisplayName(), input.getSelfIntroduction(), profileImage,
+                input.getFavoriteArtistList());
     }
 
     public void deleteUser(Long id) {
         userRepository.deleteUser(id);
     }
 
-    private User updateUser(String userName, String selfIntroduction, MultipartFile profileImage, List<Artist> artistList) {
+    private User updateUser(String userName, String selfIntroduction, MultipartFile profileImage,
+            List<Artist> artistList) {
         // 現在のファイルパスを取得
         String filePath = userUtilService.getCurrentUser().getProfileImageUrl();
 
@@ -227,15 +223,13 @@ public class UserService {
         if (artistList != null && !artistList.isEmpty()) {
             // アーティスト情報、ユーザ、アーティストリレーション情報の登録
             for (Artist artist : artistList) {
+                if (artist == null) {
+                    continue;
+                }
                 Artist registered = artistService.saveArtist(artist);
 
-                UserArtist userArtist = UserArtist.builder()
-                        .id(new UserArtistId())
-                        .user(currentUser)
-                        .artist(registered)
-                        .createdBy(currentUser.getId().toString())
-                        .updatedBy(currentUser.getId().toString())
-                        .build();
+                UserArtist userArtist = UserArtist.builder().id(new UserArtistId()).user(currentUser).artist(registered)
+                        .createdBy(currentUser.getId().toString()).updatedBy(currentUser.getId().toString()).build();
 
                 userArtistRepository.save(userArtist);
             }

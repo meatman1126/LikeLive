@@ -1,5 +1,13 @@
 package com.example.bookstore.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.bookstore.dto.repository.ParentCommentRepositoryDto;
 import com.example.bookstore.dto.view.ParentCommentViewDto;
 import com.example.bookstore.entity.Comment;
@@ -8,16 +16,10 @@ import com.example.bookstore.entity.Notification;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.entity.code.NotificationType;
 import com.example.bookstore.entity.key.CommentTreeId;
+import com.example.bookstore.exception.CommentNotFoundException;
 import com.example.bookstore.repository.jpa.CommentRepository;
 import com.example.bookstore.repository.jpa.CommentTreeRepository;
 import com.example.bookstore.service.util.UserUtilService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * コメントサービス
@@ -105,7 +107,8 @@ public class CommentService {
         //commentTreeテーブルに親コメントと返信コメントの関連を登録
         CommentTree commentTree = CommentTree.builder()
                 .id(new CommentTreeId(parentCommentId, registerdComment.getId()))
-                .parentComment(commentRepository.findById(parentCommentId).orElseThrow())
+                .parentComment(commentRepository.findById(parentCommentId)
+                        .orElseThrow(() -> new CommentNotFoundException("Parent comment not found with id: " + parentCommentId)))
                 .replyComment(registerdComment)
                 .replyNumber(replyCount + 1)
                 .createdBy(userUtilService.getCurrentUserId())
@@ -128,7 +131,8 @@ public class CommentService {
         LocalDateTime updatedTime = LocalDateTime.now();
 
         commentRepository.updateCommentContent(id, content, updatedTime, userUtilService.getCurrentUserId());
-        return commentRepository.findById(id).orElseThrow();  // 1件以上更新されたかをチェック
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new CommentNotFoundException("Comment not found with id: " + id));
     }
 
     /**
@@ -154,7 +158,8 @@ public class CommentService {
      * @return 指定されたコメント情報
      */
     public Comment getCommentById(Long id) {
-        return commentRepository.findById(id).orElse(null);
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new CommentNotFoundException("Comment not found with id: " + id));
     }
 
     /**

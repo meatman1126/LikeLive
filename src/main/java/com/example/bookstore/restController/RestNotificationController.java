@@ -1,21 +1,27 @@
 package com.example.bookstore.restController;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.bookstore.dto.form.notification.NotificationRegistrationForm;
 import com.example.bookstore.entity.Blog;
 import com.example.bookstore.entity.Notification;
 import com.example.bookstore.entity.User;
 import com.example.bookstore.entity.code.NotificationType;
+import com.example.bookstore.exception.BlogNotFoundException;
 import com.example.bookstore.service.BlogService;
 import com.example.bookstore.service.NotificationService;
 import com.example.bookstore.service.UserService;
 import com.example.bookstore.service.util.UserUtilService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Rest通知コントローラ
@@ -112,22 +118,26 @@ public class RestNotificationController {
      */
     @PostMapping("/notification/create")
     public ResponseEntity<Notification> createNotification(@RequestBody NotificationRegistrationForm form) {
-        Blog relatedBlog = null;
-        if (form.getNotificationType() == NotificationType.COMMENT
-                || form.getNotificationType() == NotificationType.BLOG_CREATED) {
-            relatedBlog = blogService.findById(form.getRelatedBlogId());
+        try {
+            Blog relatedBlog = null;
+            if (form.getNotificationType() == NotificationType.COMMENT
+                    || form.getNotificationType() == NotificationType.BLOG_CREATED) {
+                relatedBlog = blogService.findById(form.getRelatedBlogId());
+            }
+            User currentUser = userUtilService.getCurrentUser();
+            Notification createdNotification = Notification.builder()
+                    .targetUser(userService.getUserInfo(form.getTargetUserId()))
+                    .notificationType(form.getNotificationType())
+                    .relatedBlog(relatedBlog)
+                    .notificationCreatedAt(LocalDateTime.now())
+                    .isRead(false)
+                    .triggerUser(currentUser)
+                    .createdBy(currentUser.getId().toString())
+                    .updatedBy(currentUser.getId().toString())
+                    .build();
+            return ResponseEntity.ok(createdNotification);
+        } catch (BlogNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        User currentUser = userUtilService.getCurrentUser();
-        Notification createdNotification = Notification.builder()
-                .targetUser(userService.getUserInfo(form.getTargetUserId()))
-                .notificationType(form.getNotificationType())
-                .relatedBlog(relatedBlog)
-                .notificationCreatedAt(LocalDateTime.now())
-                .isRead(false)
-                .triggerUser(currentUser)
-                .createdBy(currentUser.getId().toString())
-                .updatedBy(currentUser.getId().toString())
-                .build();
-        return ResponseEntity.ok(createdNotification);
     }
 }

@@ -1,13 +1,14 @@
 package com.example.bookstore.repository.jpa;
 
-import com.example.bookstore.entity.Comment;
-import com.example.bookstore.entity.CommentTree;
-import com.example.bookstore.entity.key.CommentTreeId;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import com.example.bookstore.entity.Comment;
+import com.example.bookstore.entity.CommentTree;
+import com.example.bookstore.entity.key.CommentTreeId;
 
 public interface CommentTreeRepository extends JpaRepository<CommentTree, CommentTreeId> {
 
@@ -30,6 +31,7 @@ public interface CommentTreeRepository extends JpaRepository<CommentTree, Commen
             "FROM CommentTree ct " +
             "JOIN FETCH ct.replyComment.author " + // 即時ロードするためにJOIN FETCHを使用
             "WHERE ct.parentComment.id = :parentCommentId " +
+            "AND ct.replyComment.isDeleted = false " + // 論理削除されていないコメントのみを取得
             "ORDER BY ct.replyNumber ASC")
     List<Comment> findRepliesByParentCommentId(@Param("parentCommentId") Long parentCommentId);
 

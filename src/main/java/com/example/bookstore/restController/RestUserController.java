@@ -1,6 +1,25 @@
 package com.example.bookstore.restController;
 
-import com.example.bookstore.Exception.UserNotFoundException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.bookstore.dto.GoogleUserInfo;
 import com.example.bookstore.dto.form.user.UserDeleteForm;
 import com.example.bookstore.dto.form.user.UserRegistrationForm;
@@ -8,26 +27,18 @@ import com.example.bookstore.dto.form.user.UserUpdateForm;
 import com.example.bookstore.dto.form.user.UsersDeleteForm;
 import com.example.bookstore.dto.view.ProfileViewDto;
 import com.example.bookstore.entity.User;
+import com.example.bookstore.exception.UserNotFoundException;
 import com.example.bookstore.service.GoogleService;
 import com.example.bookstore.service.UserService;
 import com.example.bookstore.service.util.UserUtilService;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 /**
  * Restユーザコントローラ
  */
-@RestController
-@RequestMapping("/api")
+@RestController @RequestMapping("/api")
 public class RestUserController {
 
     /**
@@ -49,14 +60,14 @@ public class RestUserController {
     private GoogleService googleService;
 
     /**
-     * ログインしたユーザ情報を取得します。初回ログインでDB未登録の場合DB登録を行います。
-     * ログイン後に呼び出されることを想定しています。
+     * ログインしたユーザ情報を取得します。初回ログインでDB未登録の場合DB登録を行います。 ログイン後に呼び出されることを想定しています。
      *
      * @param authorizationHeader ヘッダーに含まれる認証情報
      * @return ログインユーザ情報
+     * @throws AuthenticationException 認証失敗時の例外
      */
-    @PostMapping("/login/after")
-    public ResponseEntity<User> getLoginUser(@RequestHeader("Authorization") String authorizationHeader) {
+         @PostMapping("/login/after")
+         public ResponseEntity<User> getLoginUser(@RequestHeader("Authorization") String authorizationHeader) {
         try {
             // DBにユーザが存在するか確認
             User user = userUtilService.getCurrentUser();
@@ -69,37 +80,32 @@ public class RestUserController {
 
                 // Google APIを呼び出してユーザ情報を取得
                 GoogleUserInfo googleUserInfo = googleService.getUserInfo(accessToken);
-                user = User.builder()
-                        .displayName(googleUserInfo.getGivenName())
-                        .subject(googleUserInfo.getSub())
-                        .enabled(true)
-                        .createdBy("System")
-                        .updatedBy("System")
-                        .build();
+                user = User.builder().displayName(googleUserInfo.getGivenName()).subject(googleUserInfo.getSub())
+                        .enabled(true).createdBy("System").updatedBy("System").build();
                 userService.register(user);
             }
             // ユーザ情報を返却
             return ResponseEntity.ok(user);
-        } catch (Exception e) {
+        } catch (AuthenticationException e) {
             // エラーが発生した場合、適切なステータスコードとメッセージを返却
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            throw new BadCredentialsException("ログインに失敗しました。");
         }
     }
 
     /**
      * ユーザ情報を更新します。(初回更新想定)
      *
-     * @param formData     ユーザ情報（ユーザ名および好きなアーティスト）
+     * @param formData ユーザ情報（ユーザ名および好きなアーティスト）
      * @param profileImage プロフィール画像ファイル
      * @return ユーザ更新処理の結果を返します。
      */
     @PostMapping("/user/update/initial")
-    public ResponseEntity<User> updateUser(
-            @ModelAttribute UserRegistrationForm formData,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage
-    ) {
+    public ResponseEntity<User> updateUser(@ModelAttribute UserRegistrationForm formData,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
+        System.out.println(formData);
+        System.out.println(formData.getArtistList());
+
         User updatedUser = userService.initialUpdate(formData, profileImage);
-//        User updatedUser = userService.getUserInfo(userUtilService.getCurrentUser().getId());
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -126,11 +132,11 @@ public class RestUserController {
     @GetMapping("/user/my")
     public ResponseEntity<User> getUser() {
         try {
-            User currentUser = userService.findBySubject(
-                    SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+            User currentUser = userService
+                    .findBySubject(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
             return ResponseEntity.ok(currentUser);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.notFound().build();
+            throw new EntityNotFoundException("ユーザが見つかりませんでした。");
         }
     }
 
@@ -146,10 +152,10 @@ public class RestUserController {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             System.out.println(auth.getPrincipal());
             User user = userService.getUserInfo(id);
-//            User user1 = userUtilService.getCurrentUser();
+            // User user1 = userUtilService.getCurrentUser();
             return ResponseEntity.ok(user);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.notFound().build();
+            throw new EntityNotFoundException("ユーザが見つかりませんでした。");
         }
     }
 
@@ -172,9 +178,13 @@ public class RestUserController {
      */
     @GetMapping("/user/profile/{targetUserId}")
     public ResponseEntity<ProfileViewDto> getOthersProfile(@PathVariable Long targetUserId) {
-        boolean isOthersInfo = !targetUserId.equals(userUtilService.getCurrentUser().getId());
-        ProfileViewDto profile = userService.getUserProfile(targetUserId, isOthersInfo);
-        return ResponseEntity.ok(profile);
+        try {
+            boolean isOthersInfo = !targetUserId.equals(userUtilService.getCurrentUser().getId());
+            ProfileViewDto profile = userService.getUserProfile(targetUserId, isOthersInfo);
+            return ResponseEntity.ok(profile);
+        } catch (UserNotFoundException e) {
+            throw new EntityNotFoundException("ユーザが見つかりませんでした。");
+        }
     }
 
     /**
@@ -195,17 +205,15 @@ public class RestUserController {
         return Sort.by(Sort.Direction.DESC, "createdUt");
     }
 
-
     /**
      * ユーザプロフィール情報を更新します。
      *
-     * @param form         ユーザ更新情報
+     * @param form ユーザ更新情報
      * @param profileImage プロフィール画像
      * @return 更新後のユーザ情報
      */
     @PostMapping("/user/update")
-    public ResponseEntity<ProfileViewDto> updateUserProfile(
-            @ModelAttribute UserUpdateForm form,
+    public ResponseEntity<ProfileViewDto> updateUserProfile(@ModelAttribute UserUpdateForm form,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
 
         User updatedUser = userService.updateUserProfile(form, profileImage);
@@ -233,8 +241,7 @@ public class RestUserController {
      * @param form 削除対象のユーザID
      * @return ユーザ削除処理結果
      */
-    @PostMapping("/users/delete")
-    @Transactional
+    @PostMapping("/users/delete") @Transactional
     public ResponseEntity<User> deleteUsers(@RequestBody UsersDeleteForm form) {
         for (Long id : form.getIdList()) {
             userService.deleteUser(id);
@@ -251,6 +258,5 @@ public class RestUserController {
             throw new IllegalArgumentException("Invalid Authorization header");
         }
     }
-
 
 }

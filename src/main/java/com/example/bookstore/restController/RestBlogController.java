@@ -1,5 +1,27 @@
 package com.example.bookstore.restController;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.bookstore.dto.form.blog.BlogCountUpdateForm;
 import com.example.bookstore.dto.form.blog.BlogRegistrationForm;
 import com.example.bookstore.dto.form.blog.BlogUpdateForm;
@@ -8,24 +30,15 @@ import com.example.bookstore.dto.view.DashboardBlogViewDto;
 import com.example.bookstore.entity.Blog;
 import com.example.bookstore.entity.Setlist;
 import com.example.bookstore.entity.User;
+import com.example.bookstore.exception.BlogNotFoundException;
+import com.example.bookstore.exception.JsonParseException;
 import com.example.bookstore.service.BlogService;
 import com.example.bookstore.service.util.UserUtilService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import jakarta.persistence.EntityNotFoundException;
 
 /**
  * Restブログコントローラ
@@ -99,8 +112,12 @@ public class RestBlogController {
      */
     @GetMapping("/blog/{blogId}")
     public ResponseEntity<BlogInfoViewDto> getBlog(@PathVariable Long blogId) {
-        BlogInfoViewDto viewDto = blogService.findBlogInfo(blogId);
-        return ResponseEntity.ok(viewDto);
+        try {
+            BlogInfoViewDto viewDto = blogService.findBlogInfo(blogId);
+            return ResponseEntity.ok(viewDto);
+        } catch (BlogNotFoundException e) {
+            throw new EntityNotFoundException("Blog not found with id: " + blogId);
+        }
     }
 
     /**
@@ -112,8 +129,12 @@ public class RestBlogController {
      */
     @GetMapping("/public/blog/{blogId}")
     public ResponseEntity<BlogInfoViewDto> getPublicBlog(@PathVariable Long blogId) {
-        BlogInfoViewDto viewDto = blogService.findPublicBlogInfo(blogId);
-        return ResponseEntity.ok(viewDto);
+        try {
+            BlogInfoViewDto viewDto = blogService.findPublicBlogInfo(blogId);
+            return ResponseEntity.ok(viewDto);
+        } catch (BlogNotFoundException e) {
+            throw new EntityNotFoundException("Blog not found with id: " + blogId);
+        }
     }
 
     /**
@@ -160,6 +181,7 @@ public class RestBlogController {
      * @param form           登録するブログ情報
      * @param thumbnailImage サムネイル画像ファイル
      * @return ブログ登録処理の結果
+     * @throws JsonParseException JSONのパースに失敗した場合
      */
     @PostMapping("/blog/create")
     public ResponseEntity<Blog> createBlog(@ModelAttribute BlogRegistrationForm form
@@ -200,7 +222,7 @@ public class RestBlogController {
             return ResponseEntity.ok(createdBlog);
 
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().build();
+            throw new JsonParseException("Invalid JSON format in content or setlist", e);
         }
     }
 
@@ -245,9 +267,8 @@ public class RestBlogController {
             return ResponseEntity.ok(updatedBlog);
 
 
-        } catch (JsonProcessingException | IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
-
+        } catch (JsonProcessingException e) {
+            throw new JsonParseException("Invalid JSON format in content or setlist", e);
         }
     }
 
@@ -275,7 +296,7 @@ public class RestBlogController {
             blogService.deleteBlog(blogId);
 
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).build();
+            throw new AccessDeniedException("You don't have permission to delete this blog");
         }
         return ResponseEntity.ok().build();
 
