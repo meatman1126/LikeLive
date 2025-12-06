@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import BlogEditor from "../component/BlogEditor";
 import BlogViewer from "../component/BlogViewer";
 import Header from "../component/Header";
+import { useAuth } from "../hooks/useAuth";
 
 /**
  *
@@ -13,9 +14,22 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
   const [isEditMode, setIsEditMode] = useState(isEdit);
   // 編集または閲覧対象のブログID
   const { targetBlogId } = useParams();
+  const [searchParams] = useSearchParams();
+  const code = searchParams.get("code"); // 認証コードをURLから取得
 
   const location = useLocation();
   const showComments = location.state?.showComments || false;
+
+  // 認証関連の処理をカスタムフックから取得
+  const { login, handleAuthenticationCallback } = useAuth(
+    isAuthenticated,
+    setIsAuthenticated
+  );
+
+  // 認証コードがある場合の処理
+  useEffect(() => {
+    handleAuthenticationCallback(code);
+  }, [code, handleAuthenticationCallback]);
 
   // isEditが変更されるたびに、isEditModeを更新
   useEffect(() => {
@@ -27,6 +41,7 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
       <Header
         isAuthenticated={isAuthenticated}
         setIsAuthenticated={setIsAuthenticated}
+        onLogin={login}
       />
 
       {isEditMode ? (
@@ -42,7 +57,11 @@ export default function Blog({ isAuthenticated, setIsAuthenticated, isEdit }) {
       ) : (
         // 編集モードではない場合は閲覧
         <div className="p-12">
-          <BlogViewer targetBlogId={targetBlogId} showComments={showComments} />
+          <BlogViewer
+            isAuthenticated={isAuthenticated}
+            targetBlogId={targetBlogId}
+            showComments={showComments}
+          />
         </div>
       )}
     </>

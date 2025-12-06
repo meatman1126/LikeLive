@@ -32,3 +32,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### macOS ###
+.DS_Store
+**/.DS_Store
+
+### Local configuration files ###
+
+**/*.properties
+backup/backup.sql
+docker-compose.yml

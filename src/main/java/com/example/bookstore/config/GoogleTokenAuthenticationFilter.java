@@ -1,18 +1,26 @@
 package com.example.bookstore.config;
 
-import com.example.bookstore.service.common.GoogleTokenVerifier;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
+import com.example.bookstore.service.common.GoogleTokenVerifier;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * Google OAuth 2.0 認証フィルター
+ * 
+ * リクエストヘッダーに含まれる Bearer トークンを検証し、
+ * 有効なトークンが存在する場合、認証コンテキストにセットする
+ */
 public class GoogleTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final GoogleTokenVerifier tokenVerifier;

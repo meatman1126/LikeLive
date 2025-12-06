@@ -57,7 +57,7 @@ function NotificationList({
       switch (notification.notificationType) {
         case "BLOG_CREATED":
           // 新しいブログ投稿の場合、ブログの詳細ページへ遷移
-          navigate(`/blog/${notification.relatedBlog.id}`);
+          navigate(`/blog/view/${notification.relatedBlog.id}`);
           break;
 
         case "FOLLOW":
@@ -67,7 +67,7 @@ function NotificationList({
 
         case "COMMENT":
           // コメントへの返信通知の場合、該当するコメント付きブログページへ遷移
-          navigate(`/blog/${notification.relatedBlog.id}`, {
+          navigate(`/blog/view/${notification.relatedBlog.id}`, {
             state: { showComments: true },
           });
           break;

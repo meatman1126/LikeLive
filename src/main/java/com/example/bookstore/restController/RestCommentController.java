@@ -1,20 +1,30 @@
 package com.example.bookstore.restController;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.bookstore.dto.form.comment.CommentDeleteForm;
 import com.example.bookstore.dto.form.comment.CommentRegistrationForm;
 import com.example.bookstore.dto.form.comment.CommentUpdateForm;
 import com.example.bookstore.dto.view.ParentCommentViewDto;
 import com.example.bookstore.entity.Comment;
+import com.example.bookstore.exception.BlogNotFoundException;
+import com.example.bookstore.exception.CommentNotFoundException;
 import com.example.bookstore.repository.jpa.BlogRepository;
 import com.example.bookstore.service.CommentService;
 import com.example.bookstore.service.util.UserUtilService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
 
 /**
  * Restコメントコントローラ
@@ -54,6 +64,19 @@ public class RestCommentController {
     }
 
     /**
+     * 指定されたブログに対するコメントを取得します。
+     * 未認証ユーザによる取得を想定しています。
+     *
+     * @param blogId ブログID
+     * @return コメントリスト
+     */
+    @GetMapping("/public/comment/blog/{blogId}")
+    public ResponseEntity<List<ParentCommentViewDto>> getPublicCommentsByBlogId(@PathVariable Long blogId) {
+        List<ParentCommentViewDto> comments = commentService.getCommentsByBlogId(blogId);
+        return ResponseEntity.ok(comments);
+    }
+
+    /**
      * 指定されたコメントの子コメント（返信）を取得します。
      *
      * @param parentId 親コメントID
@@ -66,16 +89,32 @@ public class RestCommentController {
     }
 
     /**
+     * 指定されたコメントの子コメント（返信）を取得します。
+     * 未認証ユーザによる取得を想定しています。
+     *
+     * @param parentId 親コメントID
+     * @return コメントリスト
+     */
+    @GetMapping("/public/comment/parent/{parentId}")
+    public ResponseEntity<List<Comment>> getPublicCommentsAndRepliesByParentId(@PathVariable Long parentId) {
+        List<Comment> comments = commentService.getCommentsAndRepliesByParentId(parentId);
+        return ResponseEntity.ok(comments);
+    }
+
+    /**
      * 新規コメントを登録するエンドポイント
      *
      * @param form 新規登録するコメント情報
      * @return 登録されたコメント
+     * @throws EntityNotFoundException コメント対象のブログデータが見つからないとき
      */
     @PostMapping("/comment/create")
     public ResponseEntity<Comment> registerComment(@RequestBody CommentRegistrationForm form) {
-        Comment input = Comment.builder()
+        try {
+            Comment input = Comment.builder()
                 .content(form.getContent())
-                .blog(blogRepository.findById(form.getBlogId()).orElseThrow())
+                .blog(blogRepository.findById(form.getBlogId())
+                        .orElseThrow(() -> new BlogNotFoundException("Blog not found with id: " + form.getBlogId())))
                 .author(userUtilService.getCurrentUser())
                 .commentCreatedTime(LocalDateTime.now())
                 .commentUpdatedTime(LocalDateTime.now())
@@ -83,8 +122,11 @@ public class RestCommentController {
                 .createdBy(userUtilService.getCurrentUserId())
                 .updatedBy(userUtilService.getCurrentUserId())
                 .build();
-        Comment createdComment = commentService.registerComment(input);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
+            Comment createdComment = commentService.registerComment(input);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
+        } catch (BlogNotFoundException e) {
+            throw new EntityNotFoundException("Blog not found with id: " + form.getBlogId());
+        }
     }
 
     /**
@@ -92,21 +134,30 @@ public class RestCommentController {
      *
      * @param form 新規登録するコメント情報
      * @return 登録されたコメント
+     * @throws EntityNotFoundException 返信対象のブログデータまたは親コメントが見つからないとき
      */
     @PostMapping("/comment/reply")
     public ResponseEntity<Comment> replyComment(@RequestBody CommentRegistrationForm form) {
-        Comment input = Comment.builder()
-                .content(form.getContent())
-                .blog(blogRepository.findById(form.getBlogId()).orElseThrow())
-                .author(userUtilService.getCurrentUser())
-                .commentCreatedTime(LocalDateTime.now())
-                .commentUpdatedTime(LocalDateTime.now())
-                .isDeleted(false)
-                .createdBy(userUtilService.getCurrentUserId())
-                .updatedBy(userUtilService.getCurrentUserId())
-                .build();
-        Comment createdComment = commentService.registerReplyComment(form.getParentCommentId(), input);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
+        try {
+            // todo 返信対象の親コメントを適当に指定可能
+            Comment input = Comment.builder()
+                    .content(form.getContent())
+                    .blog(blogRepository.findById(form.getBlogId())
+                            .orElseThrow(() -> new BlogNotFoundException("Blog not found with id: " + form.getBlogId())))
+                    .author(userUtilService.getCurrentUser())
+                    .commentCreatedTime(LocalDateTime.now())
+                    .commentUpdatedTime(LocalDateTime.now())
+                    .isDeleted(false)
+                    .createdBy(userUtilService.getCurrentUserId())
+                    .updatedBy(userUtilService.getCurrentUserId())
+                    .build();
+            Comment createdComment = commentService.registerReplyComment(form.getParentCommentId(), input);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
+        } catch (CommentNotFoundException e) {
+            throw new EntityNotFoundException("Comment not found with id: " + form.getParentCommentId());
+        } catch (BlogNotFoundException e) {
+            throw new EntityNotFoundException("Blog not found with id: " + form.getBlogId());
+        }
     }
 
     /**
@@ -114,12 +165,16 @@ public class RestCommentController {
      *
      * @param form 更新するコメント情報
      * @return 更新されたコメント情報
+     * @throws EntityNotFoundException 更新対象のコメントが見つからないとき
      */
     @PostMapping("/comment/update")
-    public ResponseEntity<Comment> updateComment(
-            @RequestBody CommentUpdateForm form) {
-        Comment updatedComment = commentService.updateComment(form.getCommentId(), form.getContent());
-        return ResponseEntity.ok(updatedComment);
+    public ResponseEntity<Comment> updateComment(@RequestBody CommentUpdateForm form) {
+        try {
+            Comment updatedComment = commentService.updateComment(form.getCommentId(), form.getContent());
+            return ResponseEntity.ok(updatedComment);
+        } catch (CommentNotFoundException e) {
+            throw new EntityNotFoundException("Comment not found with id: " + form.getCommentId());
+        }
     }
 
     /**
@@ -127,6 +182,7 @@ public class RestCommentController {
      *
      * @param form 削除対象のコメントID
      * @return 削除成功時に200 OK、失敗時に404 Not Found
+     * @throws EntityNotFoundException 削除対象のコメントが見つからないとき
      */
     @PostMapping("/comment/delete")
     public ResponseEntity<Void> deleteComment(@RequestBody CommentDeleteForm form) {
@@ -134,7 +190,7 @@ public class RestCommentController {
         if (isDeleted) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            throw new EntityNotFoundException("Comment not found with id: " + form.getCommentId());
         }
     }
 
@@ -143,10 +199,16 @@ public class RestCommentController {
      *
      * @param id コメントID
      * @return 指定されたコメント情報
+     * @throws EntityNotFoundException 指定されたコメントが見つからないとき
      */
     @GetMapping("/comment/{id}")
     public ResponseEntity<Comment> getCommentById(@PathVariable Long id) {
-        Comment comment = commentService.getCommentById(id);
-        return ResponseEntity.ok(comment);
+        try {
+            Comment comment = commentService.getCommentById(id);
+            return ResponseEntity.ok(comment);
+        } catch (CommentNotFoundException e) {
+            throw new EntityNotFoundException("Comment not found with id: " + id);
+        }
     }
+
 }

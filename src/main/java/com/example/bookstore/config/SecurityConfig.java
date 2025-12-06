@@ -1,7 +1,6 @@
 package com.example.bookstore.config;
 
 
-import com.example.bookstore.service.common.GoogleTokenVerifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -11,6 +10,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.example.bookstore.service.common.GoogleTokenVerifier;
 
 @Configuration
 @EnableMethodSecurity
@@ -31,6 +32,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                // URLパターンによるアクセス制御を設定
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/",
@@ -38,11 +40,13 @@ public class SecurityConfig {
                         ).permitAll()
                         // /api/public 配下は未認証のユーザもアクセス可能
                         .requestMatchers("/login/callback").permitAll()
+                        .requestMatchers("/meta/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/static/**").permitAll()
                         .requestMatchers("/**.ico").permitAll()
                         .anyRequest().authenticated())
+                // カスタムフィルタの設定
                 .addFilterBefore(new GoogleTokenAuthenticationFilter(tokenVerifier),
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();

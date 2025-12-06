@@ -184,7 +184,7 @@ function MainComponent({
                 >
                   {/* 動的な画像の呼び出し方はAPIを呼ぶ方針とします。 */}
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${profileImage}`}
+                    src={`${config.getImageUrl}/${profileImage}`}
                     alt="Profile Image"
                     className="w-9 h-9 rounded-full"
                   />
@@ -196,7 +196,7 @@ function MainComponent({
                 >
                   {/* 動的な画像の呼び出し方はAPIを呼ぶ方針とします。 */}
                   <img
-                    src={`${config.apiBaseUrl}/api/public/files/${userInfo.profileImageUrl}`}
+                    src={`${config.getImageUrl}/${userInfo.profileImageUrl}`}
                     alt="Profile Image"
                     className="w-9 h-9 rounded-full"
                   />

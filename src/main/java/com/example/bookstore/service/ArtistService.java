@@ -1,12 +1,15 @@
 package com.example.bookstore.service;
 
-import com.example.bookstore.entity.Artist;
-import com.example.bookstore.repository.jpa.ArtistRepository;
-import com.example.bookstore.service.util.UserUtilService;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
+import com.example.bookstore.entity.Artist;
+import com.example.bookstore.exception.ArtistNotFoundException;
+import com.example.bookstore.repository.jpa.ArtistRepository;
+import com.example.bookstore.service.util.UserUtilService;
 
 /**
  * アーティストサービスクラス
@@ -33,7 +36,8 @@ public class ArtistService {
      * @return idに合致するartist
      */
     public Artist findById(String id) {
-        return artistRepository.findById(id).orElse(null);
+        return artistRepository.findById(id)
+                .orElseThrow(() -> new ArtistNotFoundException("Artist not found with id: " + id));
     }
 
     /**
@@ -51,6 +55,26 @@ public class ArtistService {
 
         //inputされたartistが未登録の場合DBへ登録する
         return Objects.requireNonNullElseGet(artist, () -> artistRepository.save(input));
+    }
+
+    /**
+     * 指定されたartistデータを更新します。
+     *
+     * @param artistId 更新対象のartistID
+     * @param input    artist情報
+     * @return 更新されたartist情報
+     */
+    public Artist updateArtist(String artistId, Artist input) {
+        Artist existingArtist = artistRepository.findById(artistId).orElseThrow(
+                () -> new IllegalStateException("指定されたアーティストデータは存在しません"));
+
+
+        existingArtist.setName(input.getName());
+        existingArtist.setImageUrl(input.getImageUrl());
+        existingArtist.setUpdatedBy(userUtilService.getCurrentUser().getId().toString());
+        existingArtist.setUpdatedAt(LocalDateTime.now());
+
+        return artistRepository.save(existingArtist);
     }
 
 

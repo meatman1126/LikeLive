@@ -1,16 +1,16 @@
 package com.example.bookstore.service.util;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  *
@@ -37,11 +37,14 @@ public class LocalStorageService implements StorageService {
     }
 
     @Override
-    public Resource getFile(String fileName) throws MalformedURLException {
+    public Resource getFile(String fileName) throws MalformedURLException, IOException {
         Path file = Paths.get(uploadDir).resolve(fileName);
-        return new UrlResource(file.toUri());
+        Resource resource = new UrlResource(file.toUri());
+        if (!resource.exists()) {
+            throw new IOException("File not found: " + fileName);
+        }
+        return resource;
     }
-
 
     @Override
     public void deleteFile(String fileName) {

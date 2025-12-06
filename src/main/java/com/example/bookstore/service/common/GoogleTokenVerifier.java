@@ -1,11 +1,16 @@
 package com.example.bookstore.service.common;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
-
+/**
+ * Google OAuth 2.0 トークン検証サービス
+ * 
+ * 指定されたトークンを検証し、GoogleのユーザID（sub）を返す
+ */
 @Service
 public class GoogleTokenVerifier {
 
@@ -22,14 +27,14 @@ public class GoogleTokenVerifier {
         try {
             String url = GOOGLE_TOKEN_URL + token;
 
-            // Google APIからレスポンスを取得
+            // Googleのトークン検証サーバへリクエストを送信
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
 
-            // "sub"プロパティ（GoogleのユーザID）を返す
+            // 検証成功時、GoogleのユーザID（sub）を返す
             if (response != null && response.containsKey("sub")) {
                 return response.get("sub").toString();
             } else {
-                return null;  // "sub"が含まれない場合
+                return null; // "sub"が含まれない場合
             }
 
         } catch (HttpClientErrorException e) {

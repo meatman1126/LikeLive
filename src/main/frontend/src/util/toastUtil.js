@@ -8,3 +8,12 @@ export const handleSuccessToast = (message) => {
     closeOnClick: true, // クリックで閉じる
   });
 };
+
+// エラー時のトースト通知
+export const handleErrotToast = (message) => {
+  toast.error(message, {
+    position: "top-right", // 位置を指定
+    autoClose: 2000, // 自動で閉じるまでの時間（ミリ秒）
+    closeOnClick: true, // クリックで閉じる
+  });
+};

@@ -1,7 +1,9 @@
 package com.example.bookstore.repository.jpa;
 
-import com.example.bookstore.dto.repository.ParentCommentRepositoryDto;
-import com.example.bookstore.entity.Comment;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,27 +11,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.example.bookstore.dto.repository.ParentCommentRepositoryDto;
+import com.example.bookstore.entity.Comment;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-
-
-    /**
-     * 指定されたブログに対するコメントを全件取得します（論理削除されていないデータ）。
-     * コメントは親コメントIDおよび返信順の昇順にソートされます。
-     *
-     * @param blogId ブログID
-     * @return コメントリスト
-     */
-    @Query("SELECT c FROM Comment c " +
-            "LEFT JOIN CommentTree ct ON c.id = ct.parentComment.id " +
-            "WHERE c.blog.id = :blogId " +
-            "AND c.isDeleted = false " +
-            "ORDER BY ct.parentComment.id ASC, ct.replyNumber ASC")
-    List<Comment> findCommentsByBlogId(@Param("blogId") Long blogId);
-
 
     /**
      * 指定されたブログIDの親コメントを取得します。
@@ -69,7 +55,16 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 
     /**
-     * commentsテーブルの指定されたレコードを削除します。
+     * 指定されたIDのコメントを取得します。   
+     *
+     * @param commentId コメントID
+     * @return コメント
+     */
+    @Query("SELECT c FROM Comment c WHERE c.id = :commentId AND c.isDeleted = false")
+    Optional<Comment> findById(@Param("commentId") Long commentId);
+
+    /**
+     * commentsテーブルの指定されたレコードを論理削除します。
      *
      * @param id     コメントID
      * @param userId 更新ユーザID

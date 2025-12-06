@@ -25,7 +25,7 @@
             <package name="" withSubpackages="true" static="false"/>
         </value>
     </option>
-    <option name="RIGHT_MARGIN" value="100"/>
+    <option name="RIGHT_MARGIN" value="100"/>ƒ
     <option name="JD_ALIGN_PARAM_COMMENTS" value="false"/>
     <option name="JD_ALIGN_EXCEPTION_COMMENTS" value="false"/>
     <option name="JD_P_AT_EMPTY_LINES" value="false"/>
@@ -133,6 +133,9 @@
         <option name="WHILE_BRACE_FORCE" value="3"/>
         <option name="FOR_BRACE_FORCE" value="3"/>
         <option name="PARENT_SETTINGS_INSTALLED" value="true"/>
+        <option name="ANNOTATION_PARAMETER_WRAP" value="1"/>
+        <option name="ANNOTATION_WRAP" value="1"/>
+        <option name="ANNOTATION_ALIGNMENT" value="1585"/>
         <indentOptions>
             <option name="INDENT_SIZE" value="2"/>
             <option name="CONTINUATION_INDENT_SIZE" value="4"/>

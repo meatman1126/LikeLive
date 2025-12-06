@@ -154,7 +154,7 @@ const TiptapEditor = forwardRef((props, ref) => {
         }
       );
       const imageUrl = await response.text();
-      const src = `${config.apiBaseUrl}/api/public/files/${imageUrl}`;
+      const src = `${config.getImageUrl}/${imageUrl}`;
 
       // Tiptapエディタに画像のパスを挿入
       editor.chain().focus().setImage({ src: src }).run();

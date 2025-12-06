@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title th:text="${title}">LikeLive | 音楽好きが集うSNS</title>
+    <meta
+      name="description"
+      content="LikeLiveで音楽の感想やライブ体験をシェアしよう"
+    />
+    <meta charset="UTF-8" />
+    <meta property="og:title" th:content="${title}" />
+    <meta property="og:description" th:content="${description}" />
+    <meta property="og:image" th:content="${imageUrl}" />
+    <meta property="og:url" th:content="${url}" />
+    <meta content="article" property="og:type" />
+    <meta content="summary_large_image" name="twitter:card" />
+    <meta name="twitter:title" th:content="${title}" />
+    <meta name="twitter:description" th:content="${description}" />
+    <meta name="twitter:image" th:content="${imageUrl}" />
+    <meta content="@river_tensix" name="twitter:site" />
+  </head>
+  <body></body>
+</html>
