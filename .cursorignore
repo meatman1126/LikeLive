@@ -1,0 +1,59 @@
+# Java関連
+/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+
+# Maven関連
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# React/Node関連
+/src/main/frontend/node_modules/
+/src/main/frontend/build/
+/src/main/frontend/dist/
+.cache/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE関連
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# その他
+*.log
+*.tmp
+*.temp
+
+# プロジェクト固有のファイル
+/info.txt
+
+# プロパティファイル
+/src/main/resources/application.properties
+/src/main/resources/application-local.properties
+/src/main/resources/application-dev.properties
+/src/main/resources/application-prod.properties
+/src/main/resources/application-test.properties
+/src/main/resources/application-test.properties
